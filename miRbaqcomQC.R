@@ -16,6 +16,8 @@ suppressPackageStartupMessages(library("glue"))
 # by default OptionParser will add an help option equivalent to
 # make_option(c("-h", "--help"), action="store_true", default=FALSE,
 # help="Show this help message and exit")
+
+
 option_list <- list(
     make_option(
         opt_str = c("-f", "--file"), 
