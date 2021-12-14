@@ -4,7 +4,7 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(include = FALSE, fig.path = "README_figs/README-")
+knitr::opts_chunk$set(include = FALSE, fig.path = "README_figs/")
 library(gridGraphics)
 library(grid)
 library(gridExtra)
@@ -18,7 +18,9 @@ This pipeline for miRNA-Seq analysis was based on the paper [A bioinformatics ap
 
 ## 
 
-```{r}
+![Pipeline Figure](README_figs/README-pipeline.png)
+
+```{r pipeline figure}
 figure <- png::readPNG("README_figs/README-pipeline.png")
 
 grid.raster(figure)
