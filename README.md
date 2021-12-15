@@ -11,3 +11,11 @@ as following.
 ## 
 
 ![Pipeline Figure](README_figs/README-pipeline.png)
+
+## UMI Tools
+
+### Instalation:
+
+``` bash
+$ pip install umi_tools
+```
