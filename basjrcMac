@@ -1,0 +1,8 @@
+alias labtec_ssh='sshpass -p PgSHD6450# ssh -XY haniel@200.235.164.117'
+alias embrapa_bacon_ssh='sshpass -p PgSHD6450# ssh -XY haniel.cedraz@bio.cnpsa.embrapa.br -p 40022'
+alias r='radian'
+alias zcat='gunzip -c'
+alias python=python3
+alias pip=pip3
+alias jupyterLab="jupyter-lab"
+alias htopy="bpytop"
