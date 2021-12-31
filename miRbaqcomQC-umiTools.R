@@ -57,13 +57,13 @@ option_list <- list(
         dest = "umiCommand"
     ),
     make_option(
-        opt_str = c("-a", "--adapters"), 
+        opt_str = c("-a", "--bcPattern"), 
         type  = 'character', 
-        default = 'TruSeq3-PE-2.fa',
+        default = 'NNNXXXXNN',
         help = glue(
-            "Sequences of adapters ligated to the 3' and 5' end (paired data: of the first read).", "For the 3' end, the adapter and subsequent bases are trimmed. If a '$' character is appended ('anchoring'), the adapter is only found if it is a suffix of the read. [default %default],",  .sep = "\n"
+            "Several techniques that use UMIs mix the UMI sequence in with a library barcode. In this case we want to remove the random part of the barcodes, but leave the library part so that the reads can be de-multiplexed. We specify this using the `--bcPattern` or short flag `-a` parameter to extract. Ns represent the random part of the barcode and Xs the fixed part. For example, in a standard iCLIP experiment, the barcode is made of 3 random bases, followed by a 4 base library barcode, followed by 2 more random bases. Thus the `--bcPattern` or short flag `-a` would be 'NNNXXXXNN'. [default %default],",  .sep = "\n"
         ),
-        dest = "adapters"
+        dest = "bcPattern"
     ),
     # make_option(
     #     opt_str = c("-r", "--multiqc"), 
@@ -392,7 +392,7 @@ if (opt$umiCommand == "extract") {
                         "umi_tools",
                         "extract",
                         paste("-I", index$R1),
-                        paste("--bc-pattern", "NNNXXXXNN", sep = "="),
+                        paste("--bc-pattern", opt$bcPattern, sep = "="),
                         paste("--read2-in", index$R2, sep = "="),
                         paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_R1.fastq.gz"), sep = "="),
                         paste("--read2-out", paste0(extractedFolder, "/", index$sampleName, "_extracted_R2.fastq.gz"), sep = "=")
@@ -406,7 +406,7 @@ if (opt$umiCommand == "extract") {
                         "umi_tools",
                         "extract",
                         paste("--stdin", index$SE),
-                        paste("--bc-pattern", "NNNXXXXNN", sep = "="),
+                        paste("--bc-pattern", opt$bcPattern, sep = "="),
                         paste("--log", paste0(logFolder, "/", index$sampleName, "_extracted.log"), sep = "="),
                         paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"), sep = "=")
                     )
@@ -421,7 +421,7 @@ if (opt$umiCommand == "extract") {
                 "umi_tools",
                 "dedup",
                 paste("--stdin", index$SE),
-                paste("--bc-pattern", "NNNXXXXNN", sep = "="),
+                paste("--bc-pattern", opt$bcPattern, sep = "="),
                 paste("--log", paste0(logFolder, "/", index$sampleName, "_extracted.log"), sep = "="),
                 paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"), sep = "=")
             )
