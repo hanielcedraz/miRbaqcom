@@ -123,7 +123,7 @@ option_list <- list(
     make_option(
         opt_str = c("-z", "--single"), 
         action = "store_true", 
-        default = FALSE,
+        default = TRUE,
         help = "Use this option if you have single-end files [doesn't need an argument]. [%default]",
         dest = "singleEnd"
     )#,
@@ -231,7 +231,7 @@ prepareCore <- function(opt_procs){
     write(paste("Using",opt_procs, "processors", sep = " "),stdout())
     return(opt_procs)
 }
-opt$singleEnd <- TRUE
+#opt$singleEnd <- TRUE
 
 if (opt$umiCommand == "extract") {
     if (!opt$singleEnd) {
