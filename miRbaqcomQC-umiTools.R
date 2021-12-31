@@ -391,9 +391,9 @@ if (opt$umiCommand == "extract") {
                     paste(
                         "umi_tools",
                         "extract",
-                        paste("-I", paste0(opt$Raw_Folder, "/", index$R1)),
+                        paste("-I", paste0(opt$RawFolder, "/", index$R1)),
                         paste("--bc-pattern", opt$bcPattern, sep = "="),
-                        paste("--read2-in", paste0(opt$Raw_Folder, "/", index$R2), sep = "="),
+                        paste("--read2-in", paste0(opt$RawFolder, "/", index$R2), sep = "="),
                         paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_R1.fastq.gz"), sep = "="),
                         paste("--read2-out", paste0(extractedFolder, "/", index$sampleName, "_extracted_R2.fastq.gz"), sep = "=")
                     )
@@ -405,7 +405,7 @@ if (opt$umiCommand == "extract") {
                     paste(
                         "umi_tools",
                         "extract",
-                        paste("--stdin", paste0(opt$Raw_Folder, "/", index$SE)),
+                        paste("--stdin", paste0(opt$RawFolder, "/", index$SE)),
                         paste("--bc-pattern", opt$bcPattern, sep = "="),
                         paste("--log", paste0(logFolder, "/", index$sampleName, "_extracted.log"), sep = "="),
                         paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"), sep = "=")
@@ -420,7 +420,7 @@ if (opt$umiCommand == "extract") {
             paste(
                 "umi_tools",
                 "dedup",
-                paste("--stdin", index$SE),
+                paste("--stdin", paste0(opt$RawFolder, "/", index$SE)),
                 paste("--bc-pattern", opt$bcPattern, sep = "="),
                 paste("--log", paste0(logFolder, "/", index$sampleName, "_extracted.log"), sep = "="),
                 paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"), sep = "=")
