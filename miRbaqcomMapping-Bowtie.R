@@ -39,7 +39,9 @@ suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("parallel"))
 suppressPackageStartupMessages(library("glue"))
 suppressPackageStartupMessages(library("baqcomPackage"))
-
+suppressPackageStartupMessages(library("stringr"))
+library(dplyr)
+source("~/Documents/baqcomPackage/R/createSampleListFunction.R")
 ########################################
 ### SETING PARAMETERS
 ########################################
@@ -89,9 +91,10 @@ option_list <- list(
     make_option(
         opt_str = c("-o", "--output"), 
         type = "character", 
-        default = "01-umiProcessed",
-        help = "Output folder [default %default]",
-        dest = "output"),
+        default = '02-MappedReads',
+        help = "Directory to store the mapped results [default %default]",
+        dest = "mappingFolder"
+    ),
     make_option(
         opt_str = c("-p", "--processors"), 
         type = "integer", 
@@ -114,7 +117,7 @@ option_list <- list(
         dest = "libraryType"
     ),
     make_option(
-        opt_str = c("-m", "--mapping"),
+        opt_str = c("-m", "--program"),
         type  = 'character', 
         default = "bowtie",
         help = "Which mapping program to use. Options: 'bowtie', boltie2', 'bwa-men'. [ default %default]",
@@ -131,9 +134,24 @@ option_list <- list(
         opt_str = c("-i", "--index"), 
         action = "store_true", 
         default = FALSE,
-        help = "This option directs STAR to re-run genome indices generation. [%default]",
+        help = "This option directs to re-run genome indices generation. [%default]",
         dest = "indexBuild"
-    )#,
+    ),
+    make_option(
+        opt_str = c("-x", "--external"), 
+        action  =  'store', 
+        type  =  "character", 
+        default = 'FALSE',
+        help = "A space delimeted file with a single line containing external parameters from bowtie [default %default]",
+        dest = "externalParameters"
+    ),
+    make_option(
+        opt_str = c("-s", "--sufix"), 
+        type = "character", 
+        default = "genome",
+        help = "Write Ebwt data to files with this indexDir/basename [default %default]",
+        dest = "indexBaseName"
+    )
     # make_option(
     #     opt_str = c("-g", "--gtfTargets"), 
     #     type = "character", 
@@ -156,10 +174,12 @@ opt <- parse_args(OptionParser(option_list = option_list, description =  paste('
 
 
 
-
-
-
-
+write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started \n\n {str_dup('-', 100)} \n\n"), stdout())
+str_dup('*', 40)
+write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
+write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
+write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
+write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
 ########################################
 ### CHECKING IF BOWTIE EXIST IN THE SYSTEM
 ########################################
@@ -191,32 +211,56 @@ opt <- parse_args(OptionParser(option_list = option_list, description =  paste('
 #     paste('Using ', detectCores(), 'threads')
 # }
 
+
+externalPar <- opt$externalParameters
+if (file.exists(externalPar)) {
+    con = file(externalPar, open = "r")
+    line = readLines(con, warn = FALSE, ok = TRUE)
+    write(
+        glue(
+            "\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 50)} Using external commands: {line} \n\n {str_dup('-', 100)} \n\n"
+        ), 
+        stdout()
+    )
+}
+
+
 # verify if sample_file exist
 if (!file.exists(opt$samplesFile)) {
-    write(paste("Sample file", opt$samplesFile, "does not exist\n"), stderr())
-    stop(paste("Could not fine", opt$samplesFile))
+    stop(paste("Sample file", opt$samplesFile, "does not exist\n"))
 }
 
 
 ## loadSampleFile
 cat("\n\n")
+
+write(
+    glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} List of samples \n\n"), 
+    stdout()
+)
 samples <- baqcomPackage::loadSamplesFile(
     file = opt$samplesFile, 
     reads_folder = opt$rawFolder, 
     column = opt$samplesColumn, libraryType = opt$libraryType
 )
-cat("\n===============================================================\n List of samples\n")
+cat("\n\n")
 print(samples)
-cat("\n")
+write(
+    glue("\n\n {str_dup('-', 100)} \n\n "), 
+    stdout()
+)
+
+write(glue("\n\n {str_dup('*', 40)}"), stdout())
 procs <- baqcomPackage::prepareCore(nThreads = opt$procs)
 cat("\n")
 
 
 
-MappingQuery <- baqcomPackage::createSampleList(
+
+MappingQuery <- createSampleList(
     samples = samples, 
     reads_folder = opt$rawFolder, 
-    column = opt$samplesColumn, fileType = "fastq.gz", 
+    column = opt$samplesColumn, fileType = "fastq", 
     libraryType = opt$libraryType, 
     step = "Mapping"
 )
@@ -293,9 +337,9 @@ if (!file.exists(file.path(logFolder))) dir.create(file.path(logFolder), recursi
 
 #gtf <- if(file.exists(opt$gtfTarget)){paste('--sjdbGTFfile', opt$gtfTarget)}
 # index_Folder <- "/Users/haniel/Documents/BAQCOM/examples/genome/index_BOWTIE"
-# opt$mappingTarget <- "/Users/haniel/Documents/BAQCOM/examples/genome/Sus.Scrofa.chr1.genome.dna.toplevel.fa"
-index_Folder <- paste0(dirname(opt$mappingTarget), '/', 'index_', toupper(opt$mappingProgram), '/')
-
+opt$mappingTarget <- "/Users/haniel/Documents/BAQCOM/examples/genome/Sus.Scrofa.chr1.genome.dna.toplevel.fa"
+#index_Folder <- paste0(dirname(opt$mappingTarget), '/', 'index_', toupper(opt$mappingProgram), '/')
+index_Folder <- dirname(opt$mappingTarget)
 # if (!file.exists(file.path(paste(index_Folder, '/', 'Genome', sep = ''))))
 # {
 #     dir.create(file.path(index_Folder), recursive = TRUE, showWarnings = FALSE)
@@ -305,17 +349,17 @@ if (!file.exists(index_Folder)) {
     dir.create(file.path(index_Folder), recursive = TRUE, showWarnings = FALSE)
 }
 
-
-indexBuiding <- function(program) {
+#bowtie <- "/Users/haniel/miniconda3/bin/bowtie"
+#"bowtie-build" <- "/Users/haniel/miniconda3/bin/bowtie-build"
+indexBuiding <- function(program, mappingTarget, index_Folder) {
     
     if (program == "bowtie") {
         try({
             system(
-                glue(
+                paste(
                     "bowtie-build", 
-                    opt$mappingTarget,
-                    glue(index_Folder, "genome"),
-                    .sep = " "
+                    mappingTarget,
+                    paste0(index_Folder, "/", opt$indexBaseName)
                 )
             )
         })
@@ -323,11 +367,10 @@ indexBuiding <- function(program) {
     } else if (program == "bowtie2") {
         try({
             system(
-                glue(
+                paste(
                     "bowtie-build", 
-                    opt$mappingTarget,
-                    index_Folder,
-                    .sep = " "
+                    mappingTarget,
+                    index_Folder
                 )
             )
         })
@@ -337,7 +380,7 @@ indexBuiding <- function(program) {
             system(
                 glue(
                     "bwa index", 
-                    opt$mappingTarget,
+                    mappingTarget,
                     index_Folder,
                     .sep = " "
                 )
@@ -349,10 +392,11 @@ indexBuiding <- function(program) {
 }
 
 #index_genom <- star.index.function()
-
-if (!file.exists(file.path(paste(index_Folder, '/', 'genome', sep = '')))) {
-    index_genom <- indexBuiding(program = opt$mappingProgram)
-}
+#tools::list_files_with_exts(index_Folder, exts = "ebwt")
+# if (!all(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))) {
+#     
+#     index_genom <- indexBuiding(program = opt$mappingProgram, opt$mappingTarget, index_Folder)
+# }
 
 userInput <- function(question) {
     cat(question)
@@ -370,21 +414,31 @@ userInput <- function(question) {
 # }
 
 if (opt$indexBuild) {
-    if (!file.exists(file.path(paste0(index_Folder, 'genome.4.ebwt')))) {
-        index_genom <- indexBuiding(program = opt$mappingProgram)
+    if (!all(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))){
+        write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
+        
+        index_genom <- indexBuiding(program = opt$mappingProgram, opt$mappingTarget, index_Folder)
+        
+        write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome finished \n\n {str_dup('-', 100)} \n\n"), stdout())
     } else{
         write(paste("Index genome files already exists."), stderr())
         repeat {
-            inp <- userInput("Would you like to delete and re-run index generation? (yes or no) ")
-            imp <- "yes"
-            if (inp %in% c("yes", "no")) {
+            inp <- userInput("Would you like to delete and re-run index generation? ([yes] or no) ")
+            #imp <- "yes"
+            if (inp %in% c("yes", "no", "", "Y", "y", "N", "n")) {
+                write(glue("\n\n Buiding genome skiped \n\n"), stdout())
                 break()
+                
             } else {
                 write("Specify 'yes' or 'no'", stderr())
             }
         }
-        if (inp == "yes") {
-            index_genom <- indexBuiding(program = opt$mappingProgram)
+        if (any(inp %in% c("yes", "", "Y", "y"))) {
+            write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
+            
+            index_genom <- indexBuiding(program = opt$mappingProgram, opt$mappingTarget, index_Folder)
+            
+            write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome finished \n\n {str_dup('-', 100)} \n\n"), stdout())
         }
     }
     
@@ -395,13 +449,47 @@ if (opt$indexBuild) {
 
 #Mapping
 #pigz <- system('which pigz 2> /dev/null', ignore.stdout = TRUE, ignore.stderr = TRUE)
+# bowtie -S -p 8 /Users/haniel/Documents/BAQCOM/examples/genome/genome 00-Fastq/SRR13450790_SE_001.fastq > bowtieTest
+
+
+
+indexFiles <- paste0(index_Folder, "/", opt$indexBaseName)
 if (opt$mappingProgram == "bowtie") {
+    
     if (opt$libraryType == "singleEnd") {
-        bowtiePair <- mclapply(umiQuery, function(index){
+        samples <- samples %>% 
+            mutate(Read_1 = str_remove(Read_1, ".gz"))
+        
+        MappingQuery <- createSampleList(
+            samples = samples, 
+            reads_folder = "tempBowtie/", 
+            column = opt$samplesColumn, fileType = "fastq", 
+            libraryType = opt$libraryType, 
+            step = "Mapping"
+        )
+        
+        bowtiePair <- mclapply(MappingQuery, function(index){
+            write(paste("Command:",
+                       paste(
+                           "bowtie",
+                           "-S",
+                           paste("-p", procs),
+                           indexFiles,
+                           paste0("tempBowtie/", index$SE),
+                           if (file.exists(externalPar)) line,
+                           paste0("> ", opt$mappingFolder, "/", index$sampleName, ".sam")
+                       )
+            ), stdout())
             try({
                 system(
-                    glue(
-                        
+                    paste(
+                        "bowtie",
+                        "-S",
+                        paste("-p", procs),
+                        indexFiles,
+                        paste0("tempBowtie/", index$SE),
+                        if (file.exists(externalPar)) line,
+                        paste0("> ", opt$mappingFolder, "/", index$sampleName, ".sam")
                     )
                 )
             })
@@ -412,7 +500,7 @@ if (opt$mappingProgram == "bowtie") {
         }
         
     } else if (opt$libraryType == "pairEnd") {
-        bowtieSingle <- mclapply(umiQuery, function(index){
+        bowtieSingle <- mclapply(MappingQuery, function(index){
             try({
                 system(
                     paste(
@@ -435,7 +523,7 @@ if (opt$mappingProgram == "bowtie") {
     
 } else if (opt$mappingProgram == "bowtie2") {
     if (opt$libraryType == "singleEnd") {
-        bowtie2Pair <- mclapply(umiQuery, function(index){
+        bowtie2Pair <- mclapply(MappingQuery, function(index){
             try({
                 system(
                     paste(
@@ -456,7 +544,7 @@ if (opt$mappingProgram == "bowtie") {
         }
         
     } else if (opt$libraryType == "pairEnd") {
-        bowtie2Single <- mclapply(umiQuery, function(index){
+        bowtie2Single <- mclapply(MappingQuery, function(index){
             try({
                 system(
                     paste(
@@ -479,7 +567,7 @@ if (opt$mappingProgram == "bowtie") {
     
 } else if (opt$mappingProgram == "bwa") {
     if (opt$libraryType == "singleEnd") {
-        bwaPair <- mclapply(umiQuery, function(index){
+        bwaPair <- mclapply(MappingQuery, function(index){
             try({
                 system(
                     paste(
@@ -500,7 +588,7 @@ if (opt$mappingProgram == "bowtie") {
         }
         
     } else if (opt$libraryType == "pairEnd") {
-        bwaSingle <- mclapply(umiQuery, function(index){
+        bwaSingle <- mclapply(MappingQuery, function(index){
             try({
                 system(
                     paste(
