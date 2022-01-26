@@ -40,8 +40,9 @@ suppressPackageStartupMessages(library("parallel"))
 suppressPackageStartupMessages(library("glue"))
 suppressPackageStartupMessages(library("baqcomPackage"))
 suppressPackageStartupMessages(library("stringr"))
-library(dplyr)
-source("~/Documents/baqcomPackage/R/createSampleListFunction.R")
+suppressPackageStartupMessages(library(dplyr))
+
+#source("~/Documents/baqcomPackage/R/createSampleListFunction.R")
 ########################################
 ### SETING PARAMETERS
 ########################################
@@ -260,7 +261,7 @@ cat("\n")
 MappingQuery <- createSampleList(
     samples = samples, 
     reads_folder = opt$rawFolder, 
-    column = opt$samplesColumn, fileType = "fastq", 
+    column = opt$samplesColumn, fileType = "fastq.gz", 
     libraryType = opt$libraryType, 
     step = "Mapping"
 )
@@ -460,10 +461,20 @@ if (opt$mappingProgram == "bowtie") {
         samples <- samples %>% 
             mutate(Read_1 = str_remove(Read_1, ".gz"))
         
+        mclapply(MappingQuery, function(index) {
+            system(
+                paste(
+                    "unpigz",
+                    paste0(opt$rawFolder, "/", index$SE),
+                    paste("-p", procs)
+                )
+            )
+        }, mc.cores = opt$sampleToprocs)
+        
         MappingQuery <- createSampleList(
             samples = samples, 
-            reads_folder = "tempBowtie/", 
-            column = opt$samplesColumn, fileType = "fastq", 
+            reads_folder = opt$rawFolder, 
+            column = opt$samplesColumn, fileType = "fastq.gz", 
             libraryType = opt$libraryType, 
             step = "Mapping"
         )
@@ -475,7 +486,7 @@ if (opt$mappingProgram == "bowtie") {
                            "-S",
                            paste("-p", procs),
                            indexFiles,
-                           paste0("tempBowtie/", index$SE),
+                           paste0(opt$rawFolder, index$SE),
                            if (file.exists(externalPar)) line,
                            paste0("> ", opt$mappingFolder, "/", index$sampleName, ".sam")
                        )
