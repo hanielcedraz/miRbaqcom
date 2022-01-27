@@ -175,7 +175,7 @@ opt <- parse_args(OptionParser(option_list = option_list, description =  paste('
 
 
 
-write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started \n\n {str_dup('-', 100)} \n\n"), stdout())
+write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping reads using {opt$mappingProgram} \n\n {str_dup('-', 100)} \n\n"), stdout())
 str_dup('*', 40)
 write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
 write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
@@ -480,9 +480,14 @@ indexFiles <- paste0(index_Folder, "/", opt$indexBaseName)
 if (opt$mappingProgram == "bowtie") {
     
     if (opt$libraryType == "singleEnd") {
-        samples <- samples %>% 
-            mutate(Read_1 = str_remove(Read_1, ".gz"))
         
+        
+        
+        write(glue("\n\n {str_dup('-', 100)}"), stdout())
+        
+        
+        write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started \n\n {str_dup('-', 100)} \n\n"), stdout())
+        write(glue("\n Bowtie does not allow to use gz files, so id needs to be uncompressed"), stdout())
         mclapply(MappingQuery, function(index) {
             system(
                 paste(
@@ -492,6 +497,11 @@ if (opt$mappingProgram == "bowtie") {
                 )
             )
         }, mc.cores = opt$sampleToprocs)
+        
+        
+        
+        samples <- samples %>% 
+            mutate(Read_1 = str_remove(Read_1, ".gz"))
         
         MappingQuery <- createSampleList(
             samples = samples, 
