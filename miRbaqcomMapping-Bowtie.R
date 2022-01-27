@@ -121,7 +121,7 @@ option_list <- list(
         opt_str = c("-m", "--program"),
         type  = 'character', 
         default = "bowtie",
-        help = "Which mapping program to use. Options: 'bowtie', boltie2', 'bwa-men'. [ default %default]",
+        help = "Which mapping program to use. Options: 'bowtie', boltie2', 'bwa'. [ default %default]",
         dest = "mappingProgram"
     ),
     make_option(
@@ -181,6 +181,26 @@ write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
 write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
 write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
 write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
+
+
+
+if (is.na(opt$mappingFolder)){
+    if (opt$mappingProgram == "bowtie") {
+        opt$mappingFolder = "03-Bowtie"
+    }
+    if (opt$mappingProgram == "bowtie2"){
+        opt$mappingFolder = "03-Bowtie"
+    }
+    else if (opt$mappingProgram == "bwa"){
+        opt$mappingFolder = "03-BWA"
+    }
+    else
+        stop("Error in setting mapping folder")
+}
+
+
+
+
 ########################################
 ### CHECKING IF BOWTIE EXIST IN THE SYSTEM
 ########################################
@@ -455,6 +475,8 @@ if (opt$indexBuild) {
 
 
 indexFiles <- paste0(index_Folder, "/", opt$indexBaseName)
+
+
 if (opt$mappingProgram == "bowtie") {
     
     if (opt$libraryType == "singleEnd") {
@@ -481,15 +503,15 @@ if (opt$mappingProgram == "bowtie") {
         
         bowtiePair <- mclapply(MappingQuery, function(index){
             write(paste("Command:",
-                       paste(
-                           "bowtie",
-                           "-S",
-                           paste("-p", procs),
-                           indexFiles,
-                           paste0(opt$rawFolder, index$SE),
-                           if (file.exists(externalPar)) line,
-                           paste0("> ", opt$mappingFolder, "/", index$sampleName, ".sam")
-                       )
+                        paste(
+                            "bowtie",
+                            "-S",
+                            paste("-p", procs),
+                            indexFiles,
+                            paste0(opt$rawFolder, index$SE),
+                            if (file.exists(externalPar)) line,
+                            paste0("> ", opt$mappingFolder, "/", index$sampleName, ".sam")
+                        )
             ), stdout())
             try({
                 system(
