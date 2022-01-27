@@ -487,8 +487,8 @@ if (opt$mappingProgram == "bowtie") {
         
         
         write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started \n\n {str_dup('-', 100)} \n\n"), stdout())
-        write(glue("\n Bowtie does not allow to use gz files, so id needs to be uncompressed"), stdout())
-        mclapply(MappingQuery, function(index) {
+        write(glue("\n\n Bowtie does not allow to use gz files, so id needs to be uncompressed \n\n "), stdout())
+        unpigzFiles <- mclapply(MappingQuery, function(index) {
             system(
                 paste(
                     "unpigz",
@@ -498,11 +498,12 @@ if (opt$mappingProgram == "bowtie") {
             )
         }, mc.cores = opt$sampleToprocs)
         
-        
+        #"SRR13450790_SE_001.fastq"
         
         samples <- samples %>% 
             mutate(Read_1 = str_remove(Read_1, ".gz"))
         
+        opt$rawFolder <- "00-Fastq/"
         MappingQuery <- createSampleList(
             samples = samples, 
             reads_folder = opt$rawFolder, 
