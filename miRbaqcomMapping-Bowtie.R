@@ -72,7 +72,7 @@ option_list <- list(
         type = "character", 
         default = "01-CleanedReads",
         help = "Directory where the raw sequence data is stored [default %default]",
-        dest = "rawFolder"
+        dest = "cleanedFolder"
     ),
     make_option(
         opt_str = c("-c", "--column"), 
@@ -261,7 +261,7 @@ write(
 )
 samples <- baqcomPackage::loadSamplesFile(
     file = opt$samplesFile, 
-    reads_folder = opt$rawFolder, 
+    reads_folder = opt$cleanedFolder, 
     column = opt$samplesColumn, libraryType = opt$libraryType
 )
 cat("\n\n")
@@ -280,7 +280,7 @@ cat("\n")
 
 MappingQuery <- createSampleList(
     samples = samples, 
-    reads_folder = opt$rawFolder, 
+    reads_folder = opt$cleanedFolder, 
     column = opt$samplesColumn, fileType = "fastq.gz", 
     libraryType = opt$libraryType, 
     step = "Mapping"
@@ -492,7 +492,7 @@ if (opt$mappingProgram == "bowtie") {
             system(
                 paste(
                     "unpigz",
-                    paste0(opt$rawFolder, "/", index$SE),
+                    paste0(opt$cleanedFolder, "/", index$SE),
                     paste("-p", procs)
                 )
             )
@@ -503,10 +503,10 @@ if (opt$mappingProgram == "bowtie") {
         samples <- samples %>% 
             mutate(Read_1 = str_remove(Read_1, ".gz"))
         
-        opt$rawFolder <- "00-Fastq/"
+        #opt$cleanedFolder <- "00-Fastq/"
         MappingQuery <- createSampleList(
             samples = samples, 
-            reads_folder = opt$rawFolder, 
+            reads_folder = opt$cleanedFolder, 
             column = opt$samplesColumn, fileType = "fastq.gz", 
             libraryType = opt$libraryType, 
             step = "Mapping"
@@ -519,7 +519,7 @@ if (opt$mappingProgram == "bowtie") {
                             "-S",
                             paste("-p", procs),
                             indexFiles,
-                            paste0(opt$rawFolder, index$SE),
+                            paste0(opt$cleanedFolder, index$SE),
                             if (file.exists(externalPar)) line,
                             paste0("> ", opt$mappingFolder, "/", index$sampleName, ".sam")
                         )
@@ -531,7 +531,7 @@ if (opt$mappingProgram == "bowtie") {
                         "-S",
                         paste("-p", procs),
                         indexFiles,
-                        paste0("tempBowtie/", index$SE),
+                        paste0("opt$cleanedFolder", index$SE),
                         if (file.exists(externalPar)) line,
                         paste0("> ", opt$mappingFolder, "/", index$sampleName, ".sam")
                     )
