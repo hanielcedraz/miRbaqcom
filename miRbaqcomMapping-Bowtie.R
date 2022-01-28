@@ -487,7 +487,7 @@ if (opt$mappingProgram == "bowtie") {
         system(
             paste(
                 "unpigz",
-                paste0(opt$cleanedFolder, "/", index$SE),
+                paste0(index$SE),
                 paste("-p", procs)
             )
         )
@@ -577,7 +577,7 @@ if (opt$mappingProgram == "bowtie") {
         system(
             paste(
                 "pigz",
-                paste0(opt$cleanedFolder, "/", index$SE),
+                paste0(index$SE),
                 paste("-p", procs)
             )
         )
