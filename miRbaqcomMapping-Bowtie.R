@@ -488,6 +488,7 @@ if (opt$mappingProgram == "bowtie") {
         
         write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started \n\n {str_dup('-', 100)} \n\n"), stdout())
         write(glue("\n\n Bowtie does not allow to use gz files, so id needs to be uncompressed \n\n "), stdout())
+        #if (file.exists(opt$cleanedFolder))
         unpigzFiles <- mclapply(MappingQuery, function(index) {
             system(
                 paste(
@@ -542,6 +543,16 @@ if (opt$mappingProgram == "bowtie") {
         if (!all(sapply(bowtiePair , "==", 0L))) {
             stop(paste("Something went wrong with Bowtie. Some jobs failed"))
         }
+        
+        pigzFiles <- mclapply(MappingQuery, function(index) {
+            system(
+                paste(
+                    "pigz",
+                    paste0(opt$cleanedFolder, "/", index$SE),
+                    paste("-p", procs)
+                )
+            )
+        }, mc.cores = opt$sampleToprocs)
         
     } else if (opt$libraryType == "pairEnd") {
         bowtieSingle <- mclapply(MappingQuery, function(index){
