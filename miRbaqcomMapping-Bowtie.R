@@ -478,6 +478,34 @@ indexFiles <- paste0(index_Folder, "/", opt$indexBaseName)
 
 
 if (opt$mappingProgram == "bowtie") {
+    write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started \n\n {str_dup('-', 100)} \n\n"), stdout())
+    write(glue("\n\n Bowtie does not allow to use gz files, so it needs to be uncompressed before running bowtie \n\n "), stdout())
+    
+    write(glue("\n\n Uncompressing files............ \n\n "), stdout())
+    #if (file.exists(opt$cleanedFolder))
+    unpigzFiles <- mclapply(MappingQuery, function(index) {
+        system(
+            paste(
+                "unpigz",
+                paste0(opt$cleanedFolder, "/", index$SE),
+                paste("-p", procs)
+            )
+        )
+    }, mc.cores = opt$sampleToprocs)
+    
+    #"SRR13450790_SE_001.fastq"
+    
+    samples <- samples %>% 
+        mutate(Read_1 = str_remove(Read_1, ".gz"))
+    
+    #opt$cleanedFolder <- "00-Fastq/"
+    MappingQuery <- createSampleList(
+        samples = samples, 
+        reads_folder = opt$cleanedFolder, 
+        column = opt$samplesColumn, fileType = "fastq.gz", 
+        libraryType = opt$libraryType, 
+        step = "Mapping"
+    )
     
     if (opt$libraryType == "singleEnd") {
         
@@ -486,32 +514,8 @@ if (opt$mappingProgram == "bowtie") {
         write(glue("\n\n {str_dup('-', 100)}"), stdout())
         
         
-        write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started \n\n {str_dup('-', 100)} \n\n"), stdout())
-        write(glue("\n\n Bowtie does not allow to use gz files, so id needs to be uncompressed \n\n "), stdout())
-        #if (file.exists(opt$cleanedFolder))
-        unpigzFiles <- mclapply(MappingQuery, function(index) {
-            system(
-                paste(
-                    "unpigz",
-                    paste0(opt$cleanedFolder, "/", index$SE),
-                    paste("-p", procs)
-                )
-            )
-        }, mc.cores = opt$sampleToprocs)
         
-        #"SRR13450790_SE_001.fastq"
         
-        samples <- samples %>% 
-            mutate(Read_1 = str_remove(Read_1, ".gz"))
-        
-        #opt$cleanedFolder <- "00-Fastq/"
-        MappingQuery <- createSampleList(
-            samples = samples, 
-            reads_folder = opt$cleanedFolder, 
-            column = opt$samplesColumn, fileType = "fastq.gz", 
-            libraryType = opt$libraryType, 
-            step = "Mapping"
-        )
         
         bowtiePair <- mclapply(MappingQuery, function(index){
             write(paste("Command:",
@@ -544,15 +548,6 @@ if (opt$mappingProgram == "bowtie") {
             stop(paste("Something went wrong with Bowtie. Some jobs failed"))
         }
         
-        pigzFiles <- mclapply(MappingQuery, function(index) {
-            system(
-                paste(
-                    "pigz",
-                    paste0(opt$cleanedFolder, "/", index$SE),
-                    paste("-p", procs)
-                )
-            )
-        }, mc.cores = opt$sampleToprocs)
         
     } else if (opt$libraryType == "pairEnd") {
         bowtieSingle <- mclapply(MappingQuery, function(index){
@@ -576,6 +571,17 @@ if (opt$mappingProgram == "bowtie") {
         }
     }
     
+    write(glue("\n\n Bowtie mapping has finished \n\n "), stdout())
+    write(glue("\n\n Compressing files............ \n\n "), stdout())
+    pigzFiles <- mclapply(MappingQuery, function(index) {
+        system(
+            paste(
+                "pigz",
+                paste0(opt$cleanedFolder, "/", index$SE),
+                paste("-p", procs)
+            )
+        )
+    }, mc.cores = opt$sampleToprocs)
 } else if (opt$mappingProgram == "bowtie2") {
     if (opt$libraryType == "singleEnd") {
         bowtie2Pair <- mclapply(MappingQuery, function(index){
