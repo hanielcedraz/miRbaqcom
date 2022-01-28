@@ -520,7 +520,7 @@ if (opt$mappingProgram == "bowtie") {
                             "-S",
                             paste("-p", procs),
                             indexFiles,
-                            paste0(opt$cleanedFolder, index$SE),
+                            paste0(opt$cleanedFolder, "/", index$SE),
                             if (file.exists(externalPar)) line,
                             paste0("> ", opt$mappingFolder, "/", index$sampleName, ".sam")
                         )
@@ -532,7 +532,7 @@ if (opt$mappingProgram == "bowtie") {
                         "-S",
                         paste("-p", procs),
                         indexFiles,
-                        paste0("opt$cleanedFolder", index$SE),
+                        paste0(opt$cleanedFolder, "/", index$SE),
                         if (file.exists(externalPar)) line,
                         paste0("> ", opt$mappingFolder, "/", index$sampleName, ".sam")
                     )
