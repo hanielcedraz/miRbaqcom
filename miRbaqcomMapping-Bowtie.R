@@ -40,7 +40,7 @@ suppressPackageStartupMessages(library("parallel"))
 suppressPackageStartupMessages(library("glue"))
 suppressPackageStartupMessages(library("baqcomPackage"))
 suppressPackageStartupMessages(library("stringr"))
-suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library("dplyr"))
 
 #source("~/Documents/baqcomPackage/R/createSampleListFunction.R")
 ########################################
@@ -121,7 +121,7 @@ option_list <- list(
         opt_str = c("-m", "--program"),
         type  = 'character', 
         default = "bowtie",
-        help = "Which mapping program to use. Options: 'bowtie', boltie2', 'bwa'. [ default %default]",
+        help = "Which mapping program to use. Options: 'bowtie', 'bwa'. [ default %default]",
         dest = "mappingProgram"
     ),
     make_option(
@@ -175,7 +175,7 @@ opt <- parse_args(OptionParser(option_list = option_list, description =  paste('
 
 
 
-write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping reads using {opt$mappingProgram} \n\n {str_dup('-', 100)} \n\n"), stdout())
+write(glue("\n\n {str_dup('=', 100)} \n\n {str_dup(' ', 40)} Mapping reads using {opt$mappingProgram} \n\n {str_dup('=', 100)} \n\n"), stdout())
 str_dup('*', 40)
 write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
 write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
@@ -184,21 +184,25 @@ write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
 
 
 
-if (is.na(opt$mappingFolder)){
-    if (opt$mappingProgram == "bowtie") {
-        opt$mappingFolder = "03-Bowtie"
-    }
-    if (opt$mappingProgram == "bowtie2"){
-        opt$mappingFolder = "03-Bowtie"
-    }
-    else if (opt$mappingProgram == "bwa"){
-        opt$mappingFolder = "03-BWA"
-    }
-    else
-        stop("Error in setting mapping folder")
+
+if (opt$mappingProgram == "bowtie") {
+    opt$mappingFolder = "02-MappedReadsBowtie"
+    
+} else if (opt$mappingProgram == "bowtie2"){
+    opt$mappingFolder = "02-MappedReadsBowtie2"
+    
+} else if (opt$mappingProgram == "bwa"){
+    opt$mappingFolder = "02-MappedReadsBWA"
+    
+} else {
+    stop("Error in setting mapping folder")
 }
 
 
+if (!file.exists(file.path(opt$mappingFolder))) {
+    dir.create(file.path(opt$mappingFolder), recursive = TRUE, showWarnings = FALSE)
+    
+}
 
 
 ########################################
@@ -239,13 +243,13 @@ if (file.exists(externalPar)) {
     line = readLines(con, warn = FALSE, ok = TRUE)
     write(
         glue(
-            "\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 50)} Using external commands: {line} \n\n {str_dup('-', 100)} \n\n"
+            "\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Using external commands: {line} \n\n {str_dup('-', 100)} \n\n"
         ), 
         stdout()
     )
 }
 
-
+  
 # verify if sample_file exist
 if (!file.exists(opt$samplesFile)) {
     stop(paste("Sample file", opt$samplesFile, "does not exist\n"))
@@ -259,6 +263,7 @@ write(
     glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} List of samples \n\n"), 
     stdout()
 )
+#opt$libraryType <- "pairEnd"
 samples <- baqcomPackage::loadSamplesFile(
     file = opt$samplesFile, 
     reads_folder = opt$cleanedFolder, 
@@ -360,6 +365,8 @@ if (!file.exists(file.path(logFolder))) dir.create(file.path(logFolder), recursi
 # index_Folder <- "/Users/haniel/Documents/BAQCOM/examples/genome/index_BOWTIE"
 #opt$mappingTarget <- "/Users/haniel/Documents/BAQCOM/examples/genome/Sus.Scrofa.chr1.genome.dna.toplevel.fa"
 #index_Folder <- paste0(dirname(opt$mappingTarget), '/', 'index_', toupper(opt$mappingProgram), '/')
+
+
 index_Folder <- dirname(opt$mappingTarget)
 # if (!file.exists(file.path(paste(index_Folder, '/', 'Genome', sep = ''))))
 # {
@@ -472,7 +479,7 @@ if (opt$indexBuild) {
 #pigz <- system('which pigz 2> /dev/null', ignore.stdout = TRUE, ignore.stderr = TRUE)
 # bowtie -S -p 8 /Users/haniel/Documents/BAQCOM/examples/genome/genome 00-Fastq/SRR13450790_SE_001.fastq > bowtieTest
 
-
+print(MappingQuery)
 
 indexFiles <- paste0(index_Folder, "/", opt$indexBaseName)
 
@@ -482,7 +489,7 @@ if (opt$mappingProgram == "bowtie") {
     write(glue("\n\n Bowtie does not allow to use gz files, so it needs to be uncompressed before running bowtie \n\n "), stdout())
     
     write(glue("\n\n Uncompressing files............ \n\n "), stdout())
-    #if (file.exists(opt$cleanedFolder))
+    #if (!all(file.exists(list_files_with_exts(index_Folder, exts = ".gz"))))
     unpigzFiles <- mclapply(MappingQuery, function(index) {
         system(
             paste(
@@ -504,9 +511,11 @@ if (opt$mappingProgram == "bowtie") {
         reads_folder = opt$cleanedFolder, 
         column = opt$samplesColumn, fileType = "fastq.gz", 
         libraryType = opt$libraryType, 
-        step = "Mapping"
+        step = "bowtie"
     )
     
+    
+    print(MappingQuery)
     if (opt$libraryType == "singleEnd") {
         
         
@@ -628,45 +637,40 @@ if (opt$mappingProgram == "bowtie") {
     
 } else if (opt$mappingProgram == "bwa") {
     if (opt$libraryType == "singleEnd") {
-        bwaPair <- mclapply(MappingQuery, function(index){
+        bwaSingle <- mclapply(MappingQuery, function(index){
+            write(paste('Starting Single-End Mapping sample', index$sampleName), stderr())
             try({
-                system(
-                    paste(
-                        "umi_tools",
-                        "extract",
-                        paste("-I", index$R1),
-                        paste("--bc-pattern", "NNNXXXXNN", sep = "="),
-                        paste("--read2-in", index$R2, sep = "="),
-                        paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_R1.fastq.gz"), sep = "="),
-                        paste("--read2-out", paste0(extractedFolder, "/", index$sampleName, "_extracted_R2.fastq.gz"), sep = "=")
-                    )
-                )
-            })
-        }, mc.cores = opt$sampleToprocs)
+                system(paste('bwa mem',
+                             '-t', ifelse(detectCores() < opt$procs, detectCores(), paste(opt$procs)),
+                             opt$mappingTarget,
+                             #paste0(index_Folder,index_names),
+                             paste0(index$SE, " > ", opt$mappingFolder, '/', index$sampleName, '_unsorted_aligned.sam'),
+                             if (file.exists(externalPar)) line))})
+        }, mc.cores = opt$sampleToprocs
+        )
         
-        if (!all(sapply(bwaPair , "==", 0L))) {
-            stop(paste("Something went wrong with BWA. Some jobs failed"))
+        
+        if (!all(sapply(bwaSingle, "==", 0L))) {
+            stop(paste("Something went wrong with BWA mapping. Some jobs failed"))
         }
         
     } else if (opt$libraryType == "pairEnd") {
-        bwaSingle <- mclapply(MappingQuery, function(index){
+        bwaPair <- mclapply(MappingQuery, function(index){
+            write(paste('Starting Single-End Mapping sample', index$sampleName), stderr())
             try({
-                system(
-                    paste(
-                        "umi_tools",
-                        "extract",
-                        paste("-I", index$R1),
-                        paste("--bc-pattern", "NNNXXXXNN", sep = "="),
-                        paste("--read2-in", index$R2, sep = "="),
-                        paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_R1.fastq.gz"), sep = "="),
-                        paste("--read2-out", paste0(extractedFolder, "/", index$sampleName, "_extracted_R2.fastq.gz"), sep = "=")
-                    )
-                )
-            })
-        }, mc.cores = opt$sampleToprocs)
+                system(paste('bwa mem',
+                             '-t', ifelse(detectCores() < opt$procs, detectCores(), paste(opt$procs)),
+                             opt$mappingTarget,
+                             paste0(index$PE1),
+                             paste0(index$PE2),
+                             paste0(">", opt$mappingFolder, '/', index$sampleName, '_unsorted_aligned.sam'),
+                             if (file.exists(externalPar)) line))})
+        }, mc.cores = opt$sampleToprocs
+        )
         
-        if (!all(sapply(bwaSingle , "==", 0L))) {
-            stop(paste("Something went wrong with BWA. Some jobs failed"))
+        
+        if (!all(sapply(bwaPair, "==", 0L))) {
+            stop(paste("Something went wrong with BWA mapping. Some jobs failed"))
         }
     }
 }
