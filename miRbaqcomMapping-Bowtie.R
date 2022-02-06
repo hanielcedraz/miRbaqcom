@@ -52,14 +52,14 @@ suppressPackageStartupMessages(library("dplyr"))
 # help="Show this help message and exit")
 
 option_list <- list(
-    make_option(
-        opt_str = c("-u", "--useConda"),
-        action = 'store_true', 
-        type = "logical",
-        default = FALSE,
-        help = "Wether to use conda enviroment",
-        dest = "useConda"
-    ),
+    # make_option(
+    #     opt_str = c("-u", "--useConda"),
+    #     action = 'store_true', 
+    #     type = "logical",
+    #     default = FALSE,
+    #     help = "Wether to use conda enviroment",
+    #     dest = "useConda"
+    # ),
     make_option(
         opt_str = c("-f", "--file"), 
         type = "character", 
@@ -152,6 +152,33 @@ option_list <- list(
         default = "genome",
         help = "Write Ebwt data to files with this indexDir/basename [default %default]",
         dest = "indexBaseName"
+    ),
+    make_option(
+        opt_str = c("-S", "--samtools"), 
+        action = "store_true", 
+        default = FALSE,
+        help = "Use this option if you want to convert the SAM files to sorted BAM. samtools is required [%default]",
+        dest = "samtools"
+    ),
+    make_option(
+        opt_str = c("-D", "--delete"), 
+        action = "store_true", default = FALSE,
+        help = "Use this option if you want to delete the SAM files after convert to sorted BAM. [%default]",
+        dest = "deleteSAMfiles"
+    ),
+    make_option(
+        opt_str = c("-e", "--extractFolder"), 
+        type = "character", 
+        default = "03-UnmappedReadsHISAT2",
+        help = "Directory to store the ummapped reads [default %default]",
+        dest = "extractedFolder"
+    ),
+    make_option(
+        opt_str = c("-u", "--unmapped"), 
+        action = "store_true", 
+        default = FALSE,
+        help = "Run samtools to extract unmapped reads from bam or sam files. [%default]",
+        dest = "unmapped"
     )
     # make_option(
     #     opt_str = c("-g", "--gtfTargets"), 
@@ -249,7 +276,7 @@ if (file.exists(externalPar)) {
     )
 }
 
-  
+
 # verify if sample_file exist
 if (!file.exists(opt$samplesFile)) {
     stop(paste("Sample file", opt$samplesFile, "does not exist\n"))
@@ -520,13 +547,11 @@ if (opt$mappingProgram == "bowtie") {
         
         
         
-        write(glue("\n\n {str_dup('-', 100)}"), stdout())
+        write(glue("\n\n {str_dup('-', 100)} \n\n Starting Bowtie Mapping Single-End \n\n {str_dup('-', 100)}"), stdout())
         
         
-        
-        
-        
-        bowtiePair <- mclapply(MappingQuery, function(index){
+        bowtieSingle <- mclapply(MappingQuery, function(index){
+            # printing used command in terminal
             write(paste("Command:",
                         paste(
                             "bowtie",
@@ -535,9 +560,10 @@ if (opt$mappingProgram == "bowtie") {
                             indexFiles,
                             paste0(opt$cleanedFolder, "/", index$SE),
                             if (file.exists(externalPar)) line,
-                            paste0("> ", opt$mappingFolder, "/", index$sampleName, ".sam")
+                            paste0("> ", opt$mappingFolder, "/", index$sampleName, "_unsorted_sample.sam")
                         )
             ), stdout())
+            
             try({
                 system(
                     paste(
@@ -547,35 +573,49 @@ if (opt$mappingProgram == "bowtie") {
                         indexFiles,
                         paste0(opt$cleanedFolder, "/", index$SE),
                         if (file.exists(externalPar)) line,
-                        paste0("> ", opt$mappingFolder, "/", index$sampleName, ".sam")
-                    )
-                )
-            })
-        }, mc.cores = opt$sampleToprocs)
-        
-        if (!all(sapply(bowtiePair , "==", 0L))) {
-            stop(paste("Something went wrong with Bowtie. Some jobs failed"))
-        }
-        
-        
-    } else if (opt$libraryType == "pairEnd") {
-        bowtieSingle <- mclapply(MappingQuery, function(index){
-            try({
-                system(
-                    paste(
-                        "bowtie",
-                        "extract",
-                        paste("-I", index$R1),
-                        paste("--bc-pattern", "NNNXXXXNN", sep = "="),
-                        paste("--read2-in", index$R2, sep = "="),
-                        paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_R1.fastq.gz"), sep = "="),
-                        paste("--read2-out", paste0(extractedFolder, "/", index$sampleName, "_extracted_R2.fastq.gz"), sep = "=")
+                        paste0("> ", opt$mappingFolder, "/", index$sampleName, "_unsorted_sample.sam")
                     )
                 )
             })
         }, mc.cores = opt$sampleToprocs)
         
         if (!all(sapply(bowtieSingle , "==", 0L))) {
+            stop(paste("Something went wrong with Bowtie. Some jobs failed"))
+        }
+        
+        
+    } else if (opt$libraryType == "pairEnd") {
+        bowtiePair <- mclapply(MappingQuery, function(index){
+            # printing used command in terminal
+            write(paste("Command:",
+                        paste(
+                            "bowtie",
+                            "-S",
+                            paste("-p", procs),
+                            indexFiles,
+                            paste0(opt$cleanedFolder, "/", index$PE1),
+                            paste0(opt$cleanedFolder, "/", index$PE2),
+                            if (file.exists(externalPar)) line,
+                            paste0("> ", opt$mappingFolder, "/", index$sampleName, "_unsorted_sample.sam")
+                        )
+            ), stdout())
+            try({
+                system(
+                    paste(
+                        "bowtie",
+                        "-S",
+                        paste("-p", procs),
+                        indexFiles,
+                        paste0(opt$cleanedFolder, "/", index$PE1),
+                        paste0(opt$cleanedFolder, "/", index$PE2),
+                        if (file.exists(externalPar)) line,
+                        paste0("> ", opt$mappingFolder, "/", index$sampleName, "_unsorted_sample.sam")
+                    )
+                )
+            })
+        }, mc.cores = opt$sampleToprocs)
+        
+        if (!all(sapply(bowtiePair , "==", 0L))) {
             stop(paste("Something went wrong with Bowtie. Some jobs failed"))
         }
     }
@@ -644,7 +684,7 @@ if (opt$mappingProgram == "bowtie") {
                              '-t', ifelse(detectCores() < opt$procs, detectCores(), paste(opt$procs)),
                              opt$mappingTarget,
                              #paste0(index_Folder,index_names),
-                             paste0(index$SE, " > ", opt$mappingFolder, '/', index$sampleName, '_unsorted_aligned.sam'),
+                             paste0(index$SE, " > ", opt$mappingFolder, '/', index$sampleName, '_unsorted_sample.sam'),
                              if (file.exists(externalPar)) line))})
         }, mc.cores = opt$sampleToprocs
         )
@@ -663,7 +703,7 @@ if (opt$mappingProgram == "bowtie") {
                              opt$mappingTarget,
                              paste0(index$PE1),
                              paste0(index$PE2),
-                             paste0(">", opt$mappingFolder, '/', index$sampleName, '_unsorted_aligned.sam'),
+                             paste0(">", opt$mappingFolder, '/', index$sampleName, '_unsorted_sample.sam'),
                              if (file.exists(externalPar)) line))})
         }, mc.cores = opt$sampleToprocs
         )
@@ -678,7 +718,104 @@ if (opt$mappingProgram == "bowtie") {
 
 
 
+santools.map <- samtoolsList <- createSampleList(
+    samples = samples, 
+    reads_folder = opt$mappingFolder, 
+    column = opt$samplesColumn, fileType = "sam", 
+    libraryType = opt$libraryType, 
+    step = "Mapping"
+)
 
+
+if (opt$samtools) {
+    
+    
+    samtools.run <- mclapply(santools.map, function(index){
+        write(paste('Starting convert sam to bam with samtools:', index$sampleName), stderr())
+        try({
+            system(paste('samtools',
+                         'sort',
+                         '--threads', ifelse(detectCores() < opt$procs, detectCores(), paste(opt$procs)),
+                         paste0(index$unsorted_sample, collapse = ","),
+                         '>', paste0(opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.bam')))})
+    }, mc.cores = opt$sampleToprocs
+    )
+    
+    
+    if (!all(sapply(samtools.run, "==", 0L))) {
+        write(paste("Something went wrong with SAMTOOLS. Some jobs failed"),stderr())
+        stop()
+    }
+    
+}
+
+
+
+
+# creating extracted_Folder
+if (opt$unmapped) {
+    if (!opt$samtools) {
+        extracted_Folder <- opt$extractedFolder
+        if (!file.exists(file.path(extracted_Folder))) dir.create(file.path(extracted_Folder), recursive = TRUE, showWarnings = FALSE)
+        samtools.ummaped <- mclapply(santools.map, function(index){
+            write(paste('Starting extract ummapped reads from sample', index$sampleName), stderr())
+            try({
+                system(paste('samtools',
+                             'view',
+                             '--threads', ifelse(detectCores() < opt$procs, detectCores(), paste(opt$procs)),
+                             '-b',
+                             '-f',
+                             4,
+                             paste0(index$unsorted_sample),
+                             '>', paste0(opt$extractedFolder,'/', index$sampleName, '_unmapped_unsorted_pos.bam')))
+                system(paste('samtools',
+                             'bam2fq',
+                             paste0(opt$extractedFolder,'/', index$sampleName, '_unmapped_unsorted_pos.bam'),
+                             '>', paste0(opt$extractedFolder,'/', index$sampleName, '_unmapped_unsorted_pos.fastq')
+                             
+                ))
+                unlink(paste0(opt$extractedFolder,'/', index$sampleName, '_unmapped_unsorted_pos.bam'))})
+        }, mc.cores = opt$sampleToprocs
+        )
+    } else if (opt$samtools) {
+        santools.map <- samtoolsList(samples, opt$inputFolder, opt$samplesColumn)
+        extracted_Folder <- opt$extractedFolder
+        if (!file.exists(file.path(extracted_Folder))) dir.create(file.path(extracted_Folder), recursive = TRUE, showWarnings = FALSE)
+        #
+        samtools.ummaped <- mclapply(santools.map, function(index){
+            write(paste('Starting extract ummapped reads from sample', index$sampleName), stderr())
+            try({
+                system(paste('samtools',
+                             'view',
+                             '--threads', ifelse(detectCores() < opt$procs, detectCores(), paste(opt$procs)),
+                             '-b',
+                             '-f',
+                             4,
+                             paste0(opt$mappingFolder,'/',index$sampleName,'_sam_sorted_pos.bam'),
+                             '>', paste0(opt$extractedFolder,'/', index$sampleName, '_unmapped_sorted_pos.nam')))
+                system(paste('samtools',
+                             'bam2fq',
+                             paste0(opt$extractedFolder,'/', index$sampleName, '_unmapped_sorted_pos.bam'),
+                             '>', paste0(opt$extractedFolder,'/', index$sampleName, '_unmapped_sorted_pos.fastq')
+                             
+                ))
+                unlink(paste0(opt$extractedFolder,'/', index$sampleName, '_unmapped_unsorted_pos.bam'))})
+        }, mc.cores = opt$sampleToprocs
+        )
+        
+        
+        if (!all(sapply(samtools.run, "==", 0L))) {
+            write(paste("Something went wrong with SAMTOOLS. Some jobs failed"),stderr())
+            stop()
+        }
+    }
+}
+
+
+
+if (opt$deleteSAMfiles) {
+    unlink(dir(path = file.path(opt$mappingFolder), recursive = TRUE, pattern = ".sam$", full.names = TRUE))
+}
 
 
 
