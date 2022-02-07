@@ -29,7 +29,9 @@
 #     paste("conda install -c bioconda bowtie")
 # )
 
-
+if (!require(baqcomPackage)) {
+    devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "never", quiet = TRUE, force = TRUE)
+}
 
 ########################################
 ### LOADING PACKAGES
@@ -291,6 +293,22 @@ write(
     stdout()
 )
 #opt$libraryType <- "pairEnd"
+
+# samples <- baqcomPackage::loadSamplesFile(
+#     file = "samplesSingle.txt",
+#     reads_folder = "01-CleanedReadsSingle/",
+#     column = opt$samplesColumn, libraryType = "singleEnd"
+# )
+# # 
+# baqcomPackage::createSampleList(
+#     samples = samples,
+#     reads_folder = "01-CleanedReadsSingle/",
+#     column = opt$samplesColumn,
+#     libraryType = "singleEnd",
+#     program = opt$mappingProgram
+# )
+
+
 samples <- baqcomPackage::loadSamplesFile(
     file = opt$samplesFile, 
     reads_folder = opt$cleanedFolder, 
@@ -310,12 +328,11 @@ cat("\n")
 
 
 
-MappingQuery <- createSampleList(
+MappingQuery <- baqcomPackage::createSampleList(
     samples = samples, 
     reads_folder = opt$cleanedFolder, 
-    column = opt$samplesColumn, fileType = "fastq.gz", 
-    libraryType = opt$libraryType, 
-    step = "Mapping"
+    column = opt$samplesColumn,
+    libraryType = opt$libraryType, program = opt$mappingProgram
 )
 
 
@@ -517,15 +534,13 @@ if (opt$mappingProgram == "bowtie") {
     
     write(glue("\n\n Uncompressing files............ \n\n "), stdout())
     #if (!all(file.exists(list_files_with_exts(index_Folder, exts = ".gz"))))
-    unpigzFiles <- mclapply(MappingQuery, function(index) {
+
         system(
-            paste(
-                "unpigz",
-                paste0(opt$cleanedFolder, "/", index$SE),
+            paste("unpigz", paste0(opt$cleanedFolder, "/*"), 
                 paste("-p", procs)
             )
         )
-    }, mc.cores = opt$sampleToprocs)
+
     
     #"SRR13450790_SE_001.fastq"
     
@@ -533,13 +548,12 @@ if (opt$mappingProgram == "bowtie") {
         mutate(Read_1 = str_remove(Read_1, ".gz"))
     
     #opt$cleanedFolder <- "00-Fastq/"
-    MappingQuery <- createSampleList(
-        samples = samples, 
-        reads_folder = opt$cleanedFolder, 
-        column = opt$samplesColumn, fileType = "fastq.gz", 
-        libraryType = opt$libraryType, 
-        step = "bowtie"
-    )
+    # MappingQuery <- createSampleList(
+    #     samples = samples,
+    #     reads_folder = opt$cleanedFolder,
+    #     column = opt$samplesColumn,
+    #     libraryType = opt$libraryType,program = opt$mappingProgram,
+    # )
     
     
     print(MappingQuery)
@@ -558,7 +572,7 @@ if (opt$mappingProgram == "bowtie") {
                             "-S",
                             paste("-p", procs),
                             indexFiles,
-                            paste0(opt$cleanedFolder, "/", index$SE),
+                            paste0(index$SE),
                             if (file.exists(externalPar)) line,
                             paste0("> ", opt$mappingFolder, "/", index$sampleName, "_unsorted_sample.sam")
                         )
@@ -571,7 +585,7 @@ if (opt$mappingProgram == "bowtie") {
                         "-S",
                         paste("-p", procs),
                         indexFiles,
-                        paste0(opt$cleanedFolder, "/", index$SE),
+                        paste0(index$SE),
                         if (file.exists(externalPar)) line,
                         paste0("> ", opt$mappingFolder, "/", index$sampleName, "_unsorted_sample.sam")
                     )
@@ -593,8 +607,8 @@ if (opt$mappingProgram == "bowtie") {
                             "-S",
                             paste("-p", procs),
                             indexFiles,
-                            paste0(opt$cleanedFolder, "/", index$PE1),
-                            paste0(opt$cleanedFolder, "/", index$PE2),
+                            paste0(index$PE1),
+                            paste0(index$PE2),
                             if (file.exists(externalPar)) line,
                             paste0("> ", opt$mappingFolder, "/", index$sampleName, "_unsorted_sample.sam")
                         )
@@ -606,8 +620,8 @@ if (opt$mappingProgram == "bowtie") {
                         "-S",
                         paste("-p", procs),
                         indexFiles,
-                        paste0(opt$cleanedFolder, "/", index$PE1),
-                        paste0(opt$cleanedFolder, "/", index$PE2),
+                        paste0(index$PE1),
+                        paste0(index$PE2),
                         if (file.exists(externalPar)) line,
                         paste0("> ", opt$mappingFolder, "/", index$sampleName, "_unsorted_sample.sam")
                     )
@@ -718,12 +732,12 @@ if (opt$mappingProgram == "bowtie") {
 
 
 
-santools.map <- samtoolsList <- createSampleList(
-    samples = samples, 
-    reads_folder = opt$mappingFolder, 
-    column = opt$samplesColumn, fileType = "sam", 
-    libraryType = opt$libraryType, 
-    step = "Mapping"
+santools.map <- createSampleList(
+    samples = samples,
+    reads_folder = opt$mappingFolder,
+    column = opt$samplesColumn, fileType = "sam",
+    libraryType = opt$libraryType,
+    program = "samtools"
 )
 
 
