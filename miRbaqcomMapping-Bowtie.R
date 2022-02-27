@@ -29,10 +29,10 @@
 #     paste("conda install -c bioconda bowtie")
 # )
 
-if (!require(baqcomPackage)) {
+if (!require(baqcomPackage, quietly = TRUE)) {
     devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "never", quiet = TRUE, force = TRUE)
 }
-
+#suppressPackageStartupMessages(devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "never", quiet = TRUE, force = TRUE))
 ########################################
 ### LOADING PACKAGES
 ########################################
@@ -84,7 +84,7 @@ option_list <- list(
         dest = "samplesColumn"
     ),
     make_option(
-        opt_str = c("-r", "--multiqc"), 
+        opt_str = c("-m", "--multiqc"), 
         action = 'store_true', 
         type = "logical",
         default = FALSE,
@@ -120,7 +120,7 @@ option_list <- list(
         dest = "libraryType"
     ),
     make_option(
-        opt_str = c("-m", "--program"),
+        opt_str = c("-M", "--program"),
         type  = 'character', 
         default = "bowtie",
         help = "Which mapping program to use. Options: 'bowtie', 'bwa'. [ default %default]",
@@ -129,7 +129,7 @@ option_list <- list(
     make_option(
         opt_str = c("-t", "--mappingTargets"), 
         type = "character", 
-        default = "mapping_targets.fa",
+        default = "referenceGenome.fa",
         help = "Path to the fasta file [target fasta] to run mapping against (default %default); or path to the directory where the genome indices are stored (path/to/the/genoma_file/index.",
         dest = "mappingTarget"
     ),
@@ -168,13 +168,13 @@ option_list <- list(
         help = "Use this option if you want to delete the SAM files after convert to sorted BAM. [%default]",
         dest = "deleteSAMfiles"
     ),
-    make_option(
-        opt_str = c("-e", "--extractFolder"), 
-        type = "character", 
-        default = "03-UnmappedReadsHISAT2",
-        help = "Directory to store the ummapped reads [default %default]",
-        dest = "extractedFolder"
-    ),
+    # make_option(
+    #     opt_str = c("-e", "--extractFolder"), 
+    #     type = "character", 
+    #     default = "03-UnmappedReadsHISAT2",
+    #     help = "Directory to store the ummapped reads [default %default]",
+    #     dest = "extractedFolder"
+    # ),
     make_option(
         opt_str = c("-u", "--unmapped"), 
         action = "store_true", 
@@ -205,11 +205,11 @@ opt <- parse_args(OptionParser(option_list = option_list, description =  paste('
 
 
 write(glue("\n\n {str_dup('=', 100)} \n\n {str_dup(' ', 40)} Mapping reads using {opt$mappingProgram} \n\n {str_dup('=', 100)} \n\n"), stdout())
-str_dup('*', 40)
-write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
-write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
-write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
-write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
+
+write(glue("\n\n {str_dup('\n', 5)} \n\n"), stdout())
+# write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
+# write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
+# write(glue("\n\n {str_dup('*', 40)} \n\n"), stdout())
 
 
 
@@ -289,7 +289,7 @@ if (!file.exists(opt$samplesFile)) {
 cat("\n\n")
 
 write(
-    glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} List of samples \n\n"), 
+    glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Samples to process \n\n"), 
     stdout()
 )
 #opt$libraryType <- "pairEnd"
@@ -315,26 +315,46 @@ samples <- baqcomPackage::loadSamplesFile(
     column = opt$samplesColumn, libraryType = opt$libraryType
 )
 cat("\n\n")
+
 print(samples)
+write(glue("\n\n {str_dup('-', 100)} \n\n"), stdout())
+write(glue("\n\n {str_dup('\n', 3)} \n\n"), stdout())
+
 write(
-    glue("\n\n {str_dup('-', 100)} \n\n "), 
+    glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 30)} Numbers of threads to be used \n\n "), 
+    stdout()
+)
+procs <- baqcomPackage::prepareCore(nThreads = opt$procs)
+#write(glue("\n\n {str_dup('\n', 5)} \n\n"), stdout())
+write(glue("\n\n {str_dup('-', 100)} \n\n"), stdout())
+write(glue("\n\n {str_dup('\n', 3)} \n\n"), stdout())
+write(
+    glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Parameters \n\n "), 
     stdout()
 )
 
-write(glue("\n\n {str_dup('*', 40)}"), stdout())
-procs <- baqcomPackage::prepareCore(nThreads = opt$procs)
-cat("\n")
+write(
+    glue("\n Samples file: {opt$samplesFile} \n Input folder: {opt$cleanedFolder} \n library type: {opt$libraryType} \n Mapping program: {opt$mappingProgram} \n Output folder: {opt$mappingFolder} \n Samples to process in parallel: {opt$sampleToprocs} samples \n\n {str_dup('-', 100)}"),
+    stdout()
+)
 
-
-
-
+#write(glue("\n\n {str_dup('-', 100)} \n\n"), stdout())
+write(glue("\n\n {str_dup('\n', 3)} \n\n"), stdout())
+write(
+    glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Total of samples to process \n\n "), 
+    stdout()
+)
 MappingQuery <- baqcomPackage::createSampleList(
     samples = samples, 
     reads_folder = opt$cleanedFolder, 
     column = opt$samplesColumn,
     libraryType = opt$libraryType, program = opt$mappingProgram
 )
-
+write(
+    glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} "), 
+    stdout()
+)
+write(glue("\n\n {str_dup('\n', 3)} \n\n"), stdout())
 
 
 # create report folders
@@ -486,7 +506,7 @@ userInput <- function(question) {
 # }
 
 if (opt$indexBuild) {
-    if (!all(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))){
+    if (!all(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))) {
         write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
         
         index_genom <- indexBuiding(program = opt$mappingProgram, opt$mappingTarget, index_Folder)
@@ -523,45 +543,75 @@ if (opt$indexBuild) {
 #pigz <- system('which pigz 2> /dev/null', ignore.stdout = TRUE, ignore.stderr = TRUE)
 # bowtie -S -p 8 /Users/haniel/Documents/BAQCOM/examples/genome/genome 00-Fastq/SRR13450790_SE_001.fastq > bowtieTest
 
-print(MappingQuery)
+#print(MappingQuery)
 
 indexFiles <- paste0(index_Folder, "/", opt$indexBaseName)
 
 
+write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 30)} Mapping started  using {opt$libraryType} reads \n\n {str_dup('-', 100)} \n\n"), stdout())
+
 if (opt$mappingProgram == "bowtie") {
-    write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started \n\n {str_dup('-', 100)} \n\n"), stdout())
-    write(glue("\n\n Bowtie does not allow to use gz files, so it needs to be uncompressed before running bowtie \n\n "), stdout())
     
-    write(glue("\n\n Uncompressing files............ \n\n "), stdout())
+    # write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started  using {opt$libraryType} reads \n\n {str_dup('-', 100)} \n\n"), stdout())
+    
+    
+    #write(glue("\n\n Uncompressing files............ \n\n "), stdout())
     #if (!all(file.exists(list_files_with_exts(index_Folder, exts = ".gz"))))
-
-        system(
-            paste("unpigz", paste0(opt$cleanedFolder, "/*"), 
-                paste("-p", procs)
-            )
-        )
-
+    
+    filetype <- function(path){
+        f = file(path)
+        ext = summary(f)$class
+        close.connection(f)
+        ext
+    }
+    #opt$cleanedFolder <- "01-CleanedReadsPair/"
+    # file("00-FastqSingle/SRR13450790_SE_001.fastq.gz")
+    allFiles <- list.files(opt$cleanedFolder)
+    # files <- lapply(allFiles, function(x) filetype(x))
+    # filetype("01-CleanedReadsSingle/SRR13450790_trim_SE.fastq.gz")
+    
+    files <- lapply(allFiles, function(x) stringr::str_detect(x, pattern = "gz"))
+    #files
+    files <- unlist(files)
+    #files
+    #stringr::str_detect(allFiles, pattern = "gz")
+    
+    
+    if (all(files)) {
+        write(glue("\n\n Bowtie does not allow to use gz files, so it needs to be uncompressed before running bowtie \n\n Uncompressing files............ \n\n"), stdout())
+        
+        unpigz <- glue::glue("unpigz {allFiles} -p {procs}")
+        
+        write(glue("\n\n {str_dup('-', max(str_count(unpigz)))} \n \n"), stdout())
+        for (i in 1:length(unpigz)) {
+            print(unpigz[i])
+            system2(unpigz[i])
+        }
+        write(glue("\n\n {str_dup('-', max(str_count(unpigz)))} \n \n"), stdout())
+    }
+    
+    
     
     #"SRR13450790_SE_001.fastq"
     
-    samples <- samples %>% 
+    samples <- samples %>%
         mutate(Read_1 = str_remove(Read_1, ".gz"))
     
     #opt$cleanedFolder <- "00-Fastq/"
-    # MappingQuery <- createSampleList(
-    #     samples = samples,
-    #     reads_folder = opt$cleanedFolder,
-    #     column = opt$samplesColumn,
-    #     libraryType = opt$libraryType,program = opt$mappingProgram,
-    # )
+    MappingQuery <- baqcomPackage::createSampleList(
+        samples = samples,
+        reads_folder = opt$cleanedFolder,
+        column = opt$samplesColumn,
+        libraryType = opt$libraryType,program = opt$mappingProgram,
+    )
     
     
-    print(MappingQuery)
+    #print(MappingQuery)
     if (opt$libraryType == "singleEnd") {
         
         
         
-        write(glue("\n\n {str_dup('-', 100)} \n\n Starting Bowtie Mapping Single-End \n\n {str_dup('-', 100)}"), stdout())
+        # write(glue("\n\n {str_dup('-', 100)} \n\n Starting Bowtie Mapping Single-End \n\n {str_dup('-', 100)}"), stdout())
         
         
         bowtieSingle <- mclapply(MappingQuery, function(index){
@@ -635,16 +685,17 @@ if (opt$mappingProgram == "bowtie") {
     }
     
     write(glue("\n\n Bowtie mapping has finished \n\n "), stdout())
-    write(glue("\n\n Compressing files............ \n\n "), stdout())
-    pigzFiles <- mclapply(MappingQuery, function(index) {
+    
+    files <- list.files(opt$cleanedFolder)
+    if (!all(lapply(files, function(x) filetype(x)) == "gzfile")) {
+        write(glue("\n\n Compressing files............ \n\n "), stdout())
         system(
-            paste(
-                "pigz",
-                paste0(opt$cleanedFolder, "/", index$SE),
-                paste("-p", procs)
+            paste("pigz", paste0(opt$cleanedFolder, "/*"), 
+                  paste("-p", procs)
             )
         )
-    }, mc.cores = opt$sampleToprocs)
+    }
+    
 } else if (opt$mappingProgram == "bowtie2") {
     if (opt$libraryType == "singleEnd") {
         bowtie2Pair <- mclapply(MappingQuery, function(index){
@@ -690,6 +741,8 @@ if (opt$mappingProgram == "bowtie") {
     }
     
 } else if (opt$mappingProgram == "bwa") {
+   
+    
     if (opt$libraryType == "singleEnd") {
         bwaSingle <- mclapply(MappingQuery, function(index){
             write(paste('Starting Single-End Mapping sample', index$sampleName), stderr())
@@ -741,26 +794,115 @@ santools.map <- createSampleList(
 )
 
 
+## run samtools
 if (opt$samtools) {
-    
-    
-    samtools.run <- mclapply(santools.map, function(index){
-        write(paste('Starting convert sam to bam with samtools:', index$sampleName), stderr())
+    write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 20)} Sorting genes by coordenates and generating stats\n\n {str_dup('-', 100)} \n\n"), stdout())
+    samtools_out <- mclapply(santools.map, function(index){
+        #dir.create(file.path(opt$mappingFolder, index$sampleName))
         try({
-            system(paste('samtools',
-                         'sort',
-                         '--threads', ifelse(detectCores() < opt$procs, detectCores(), paste(opt$procs)),
-                         paste0(index$unsorted_sample, collapse = ","),
-                         '>', paste0(opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.bam')))})
-    }, mc.cores = opt$sampleToprocs
-    )
+            system(
+                paste(
+                    'samtools',
+                    'sort',
+                    paste('--threads', procs),
+                    paste0(index$unsorted_sample, collapse = ","),
+                    '>', paste0(opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.bam')
+                )
+            )
+            
+            # system(
+            #     paste(
+            #         'samtools',
+            #         'depth -a',
+            #         paste('--threads', procs),
+            #         paste0(index$unsorted_sample, collapse = ","),
+            #         paste("| awk '{c++; if($3>0) total+=1}END{print (total/c)*100}'"),
+            #         paste0(" > ", opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.depth')
+            #     )
+            # )
+            
+            #samtools depth -a file.bam | awk '{c++; if($3>0) total+=1}END{print (total/c)*100}'
+            
+            system(
+                paste(
+                    'samtools',
+                    'flagstat',
+                    paste('--threads', procs),
+                    paste0(index$unsorted_sample, collapse = ","),
+                    '>', paste0(opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.flagstat')
+                )
+            )
+            
+            
+            
+        })
+    }, mc.cores = procs)
     
-    
-    if (!all(sapply(samtools.run, "==", 0L))) {
-        write(paste("Something went wrong with SAMTOOLS. Some jobs failed"),stderr())
+    if (!all(sapply(samtools_out, "==", FALSE))){
+        write(paste("Something went wrong with samtools processing some jobs failed"),stderr())
         stop()
     }
     
+    
+    
+    # samtools.run <- mclapply(santools.map, function(index){
+    #     write(paste('Starting convert sam to bam with samtools:', index$sampleName), stderr())
+    #     try({
+    #         system(paste('samtools',
+    #                      'sort',
+    #                      paste('--threads', procs),
+    #                      paste0(index$unsorted_sample, collapse = ","),
+    #                      '>', paste0(opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.bam')))})
+    # }, mc.cores = opt$sampleToprocs
+    # )
+    # 
+    # 
+    # if (!all(sapply(samtools.run, "==", 0L))) {
+    #     stop(paste("Something went wrong with SAMTOOLS. Some jobs failed"))
+    #     
+    # }
+    
+} else {
+    
+    
+    write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Generating stats\n\n {str_dup('-', 100)} \n\n"), stdout())
+    
+    samtools_out <- mclapply(santools.map, function(index){
+        #dir.create(file.path(opt$mappingFolder, index$sampleName))
+        try({
+            # system(
+            #     paste(
+            #         'samtools',
+            #         'depth -a',
+            #         paste('--threads', procs),
+            #         paste0(index$unsorted_sample, collapse = ","),
+            #         paste("| awk '{c++; if($3>0) total+=1}END{print (total/c)*100}'"),
+            #         paste0(" > ", opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.depth')
+            #     )
+            # )
+            
+            #samtools depth -a file.bam | awk '{c++; if($3>0) total+=1}END{print (total/c)*100}'
+            
+            system(
+                paste(
+                    'samtools',
+                    'flagstat',
+                    paste('--threads', procs),
+                    paste0(index$unsorted_sample, collapse = ","),
+                    '>', paste0(opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.flagstat')
+                )
+            )
+            
+
+            
+            
+        })
+    }, mc.cores = procs)
+    
+    if (!all(sapply(samtools_out, "==", FALSE))){
+        write(paste("Something went wrong with samtools processing some jobs failed"),stderr())
+        stop()
+    }
 }
 
 
@@ -832,15 +974,129 @@ if (opt$deleteSAMfiles) {
 }
 
 
+#opt$mappingFolder <- "02-MappedReadsBWA"
+# files <- list.files(opt$mappingFolder, pattern = ".flagstat", full.names = TRUE)
+# getwd()
+# stats <- lapply(files, function(x) readLines(x))
+# print(stats)
+
+#setwd("/Users/haniel/OneDrive/posDoc/miRbaqcom/02-MappedReadsBWA/")
+#x <- readr::read_log("HE20-100K_sam_sorted_pos.flagstat", show_col_types = FALSE, trim_ws = TRUE)
+
+
+TidyTable <- function(x) {
+    final <- tibble::tibble(
+        "in total (QC-passed reads + QC-failed reads)" = x[1,1],
+        'primary' = x[2,1],
+        'supplementary' = x[3,1],
+        'duplicates' = x[4,1],
+        'primary duplicates' = x[5,1],
+        'mapped' = glue::glue("{x[7,1]} {x[7,5]})"),
+        'primary mapped' = glue::glue("{x[7,1]} {x[8,6]})"),
+        'paired in sequencing' = x[8,1],
+        'read1' = x[9,1],
+        'read2' = x[10,1],
+        'properly paired' = glue::glue("{x[11,1]} {x[8,6]})"),
+        'with itself and mate mapped' = x[12,1],
+        'singletons' = glue::glue("{x[13,1]} {x[8,6]})")
+    )
+    return(final)
+}
+
+report_sample <- list()
+#opt$mappingFolder <- "02-MappedReadsBWA/"
+#print(getwd())
+statFiles <- list.files(opt$mappingFolder, pattern = ".flagstat", full.names = TRUE)
+for (i in statFiles) { # change this to your "samples"
+    #print(i)
+    suppressWarnings(report_sample[[i]] <- readr::read_log(
+                                                            i, 
+                                                            show_col_types = FALSE, 
+                                                            col_names = c(
+                                                                "in total (QC-passed reads + QC-failed reads)",
+                                                                'primary',
+                                                                'supplementary',
+                                                                'duplicates',
+                                                                'primary duplicates',
+                                                                'mapped',
+                                                                'primary mapped',
+                                                                'paired in sequencing',
+                                                                'read1',
+                                                                'read2',
+                                                                'properly paired',
+                                                                'with itself and mate mapped',
+                                                                'singletons'
+                                                                )
+                                                            )
+                     )
+}
+
+#list.files("/Users/haniel/OneDrive/posDoc/miRbaqcom/02-MappedReadsBWA/", pattern = ".flagstat")
+df <- lapply(report_sample, FUN = function(x) TidyTable(x))
+final_df <- do.call("rbind", df)
+report <- "report"
+if (!file.exists(report)) {
+    dir.create(report, recursive = TRUE)
+}
+write.table(final_df, paste0(report,"/report_mapping", opt$mappingProgram, ".log"))
+
+print(data.table::as.data.table(final_df))
 
 
 
-cat('\n')
+
+# # 
+# #####################################################
+# sapply(samples, function(tgt) {
+#     print(paste("Generating output for target:", tgt[1]))})
+# files <- list.files(opt$mappingFolder, pattern = ".sam")
+# 
+# file.path()
+# samplesID <- samples[,1]
+# # write out index tables
+# targetTables <- sapply(samples[,opt$samplesColumn], function(tgt) {
+#     print(paste("Generating output for target:",tgt[1]))
+#     filesToRead <- unlist(file.path(
+#         opt$mappingFolder,
+#         paste0(tgt[1], "_sam_sorted_pos.flagstat")
+#     )
+#     
+#     
+#     )
+#     
+#     
+#     #	filesToRead <- unlist(sapply(file.path(opt$mappingFolder,unique(samples[,opt$samplesColumn])),dir,pattern=paste(tgt[1],"idxstats",sep="."),full.names=TRUE))
+#     info <- read.table(filesToRead[1])[,1:2]
+#     colnames(info) <- c("SequenceID","SequenceLength")
+#     data <- sapply(filesToRead,function(file){
+#         tb <- read.table(file)
+#         values <- rowSums(as.matrix(tb[,3:4]))
+#         values
+#     })
+#     colnames(data) <- basename(colnames(data))
+#     freq <- round(sweep(data,2,colSums(data),"/")*100,3)
+#     write.table(cbind(info,data),file.path(opt$mappingFolder,paste(tgt[1],"summary","reads","txt",sep=".")),row.names=FALSE,col.names=TRUE,quote=FALSE,sep="\t")
+#     write.table(cbind(info,freq),file.path(opt$mappingFolder,paste(tgt[1],"summary","proportions","txt",sep=".")),row.names=FALSE,col.names=TRUE,quote=FALSE,sep="\t")
+#     pmapped <- 100-tail(freq,1)
+#     #	as.vector(pmapped)
+#     names(pmapped) <- colnames(freq)
+#     round(pmapped,3)
+# })
+# 
+# targetTables <- data.frame(targetTables)
+# colnames(targetTables) <- sapply(targets,"[[",1L)
+# 
+# ### simple assign by most on target
+# targetTables <- data.frame(ID=rownames(targetTables),targetTables,assign=colnames(targetTables)[apply(targetTables,1,which.max)])
+# write.table(targetTables,file.path(opt$mappingFolder,"SummarySample2Targets.txt"),sep="\t",row.names=TRUE,col.names=TRUE,quote=FALSE)
+# 
+# cat('\n')
 # 
 # # Creating samples report
 # if (!opt$singleEnd) {
 #     TidyTable <- function(x) {
 #         final <- data.frame('Input_Read_Pairs' = x[1,2],
+#                                          header = F, as.is = T, fill = TRUE, sep = ':', text = TRUE)
 #                             'Pairs_Reads' = x[2,2],
 #                             'Pairs_Read_Percent' = x[3,2],
 #                             'Forward_Only_Surviving_Reads' = x[4,2],
@@ -855,7 +1111,6 @@ cat('\n')
 #     report_sample <- list()
 #     for (i in samples[,1]) { # change this to your "samples"
 #         report_sample[[i]] <- read.table(paste0(reports,'/', report_folder, '/', i,"_statsSummaryFile.txt"),
-#                                          header = F, as.is = T, fill = TRUE, sep = ':', text = TRUE)
 #     }
 #     
 #     df <- lapply(report_sample, FUN = function(x) TidyTable(x))
