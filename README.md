@@ -1,6 +1,11 @@
 miRbaqcom
 ================
 
+Download repository
+```
+git clone https://github.com/hanielcedraz/miRbaqcom.git
+```
+
 ## GitHub Documents
 
 This pipeline for miRNA-Seq analysis was based on the paper [A
