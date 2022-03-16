@@ -2,8 +2,16 @@ miRbaqcom
 ================
 
 Download repository
-```
+``` bash
 git clone https://github.com/hanielcedraz/miRbaqcom.git
+```
+Open miRbaqcom folder
+``` bash
+cd miRbaqcom
+```
+make pipelines executable
+``` bash
+chmod +x *.R
 ```
 
 ## GitHub Documents
