@@ -11,7 +11,7 @@ cd miRbaqcom
 ```
 make pipelines executable
 ``` bash
-chmod +x *.R
+chmod +x miRbaqcom*.R
 ```
 
 ## GitHub Documents
