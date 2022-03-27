@@ -30,7 +30,7 @@
 # )
 
 if (!require(baqcomPackage, quietly = TRUE)) {
-    devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "never", quiet = TRUE, force = TRUE)
+    devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "always", quiet = TRUE, force = TRUE)
 }
 #suppressPackageStartupMessages(devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "never", quiet = TRUE, force = TRUE))
 ########################################
@@ -93,8 +93,9 @@ option_list <- list(
     ),
     make_option(
         opt_str = c("-o", "--output"), 
+        action = "store_true",
         type = "character", 
-        default = '02-MappedReads',
+        #default = '02-MappedReads',
         help = "Directory to store the mapped results [default %default]",
         dest = "mappingFolder"
     ),
@@ -213,19 +214,21 @@ write(glue("\n\n {str_dup('\n', 5)} \n\n"), stdout())
 
 
 
-
-if (opt$mappingProgram == "bowtie") {
-    opt$mappingFolder = "02-MappedReadsBowtie"
-    
-} else if (opt$mappingProgram == "bowtie2"){
-    opt$mappingFolder = "02-MappedReadsBowtie2"
-    
-} else if (opt$mappingProgram == "bwa"){
-    opt$mappingFolder = "02-MappedReadsBWA"
-    
-} else {
-    stop("Error in setting mapping folder")
+if (is.null(opt$mappingFolder)) {
+    if (opt$mappingProgram == "bowtie") {
+        opt$mappingFolder = "02-MappedReadsBowtie"
+        
+    } else if (opt$mappingProgram == "bowtie2"){
+        opt$mappingFolder = "02-MappedReadsBowtie2"
+        
+    } else if (opt$mappingProgram == "bwa"){
+        opt$mappingFolder = "02-MappedReadsBWA"
+        
+    } else {
+        stop("Error in setting mapping folder")
+    }
 }
+
 
 
 if (!file.exists(file.path(opt$mappingFolder))) {
