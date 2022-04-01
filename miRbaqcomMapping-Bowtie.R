@@ -583,7 +583,7 @@ if (opt$mappingProgram == "bowtie") {
     if (all(files)) {
         write(glue("\n\n Bowtie does not allow to use gz files, so it needs to be uncompressed before running bowtie \n\n Uncompressing files............ \n\n"), stdout())
         
-        unpigz <- glue::glue("unpigz {allFiles} -p {procs}")
+        unpigz <- glue::glue("unpigz -p {procs} {allFiles} ")
         
         write(glue("\n\n {str_dup('-', max(str_count(unpigz)))} \n \n"), stdout())
         for (i in 1:length(unpigz)) {
@@ -693,8 +693,7 @@ if (opt$mappingProgram == "bowtie") {
     if (!all(lapply(files, function(x) filetype(x)) == "gzfile")) {
         write(glue("\n\n Compressing files............ \n\n "), stdout())
         system(
-            paste("pigz", paste0(opt$cleanedFolder, "/*"), 
-                  paste("-p", procs)
+            paste("pigz", paste("-p", procs), paste0(opt$cleanedFolder, "/*")
             )
         )
     }
