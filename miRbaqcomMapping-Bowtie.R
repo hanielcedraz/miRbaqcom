@@ -586,7 +586,8 @@ userInput <- function(question) {
 
 if (opt$mappingProgram == "bowtie") {
     print(index_Folder)
-    if (all(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))) {
+    #indexFiles <- list.files(index_Folder, pattern = "ebwt")
+    if (any(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))) {
         write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 30)} Genome is built and all is set for mapping \n\n {str_dup('-', 100)} \n\n"), stdout())
     } else {
         write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
@@ -599,7 +600,7 @@ if (opt$mappingProgram == "bowtie") {
     
     
     if (opt$indexBuild) {
-        if (!all(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))) {
+        if (!any(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))) {
             write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
             
             index_genom <- indexBuiding(program = opt$mappingProgram, opt$mappingTarget, index_Folder)
