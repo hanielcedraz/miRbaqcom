@@ -311,12 +311,16 @@ write(
 #     program = opt$mappingProgram
 # )
 
-
+#opt$samplesFile <- "/Users/haniel/OneDrive/posDoc/miRbaqcom/samplesReal.txt"
+#opt$cleanedFolder <- "/Users/haniel/OneDrive/posDoc/miRbaqcom/01-CleanedReadsReal/"
 samples <- baqcomPackage::loadSamplesFile(
     file = opt$samplesFile, 
     reads_folder = opt$cleanedFolder, 
-    column = opt$samplesColumn, libraryType = opt$libraryType
-)
+    column = opt$samplesColumn, 
+    libraryType = opt$libraryType
+) 
+
+
 cat("\n\n")
 
 print(samples)
@@ -341,17 +345,89 @@ write(
     stdout()
 )
 
+
+
+
+# ext <- unique(file_ext(dir(file.path(opt$cleanedFolder), pattern = "gz")))
+# if (length(ext) == 0) {
+#     write(paste("Cannot locate fastq or sff file in folder", reads_folder, "\n"), stderr())
+#     stop()
+# }
+
+if (opt$mappingProgram == "bowtie") {
+    
+    # write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started  using {opt$libraryType} reads \n\n {str_dup('-', 100)} \n\n"), stdout())
+    
+    
+    #write(glue("\n\n Uncompressing files............ \n\n "), stdout())
+    #if (!all(file.exists(list_files_with_exts(index_Folder, exts = ".gz"))))
+    
+    filetype <- function(path){
+        f = file(path)
+        ext = summary(f)$class
+        close.connection(f)
+        ext
+    }
+    #opt$cleanedFolder <- "01-CleanedReadsPair/"
+    # file("00-FastqSingle/SRR13450790_SE_001.fastq.gz")
+    allFiles <- list.files(opt$cleanedFolder, full.names = TRUE)
+    # files <- lapply(allFiles, function(x) filetype(x))
+    # filetype("01-CleanedReadsSingle/SRR13450790_trim_SE.fastq.gz")
+    
+    files <- lapply(allFiles, function(x) stringr::str_detect(x, pattern = "gz"))
+    #files
+    files <- unlist(files)
+    #files
+    #stringr::str_detect(allFiles, pattern = "gz")
+    
+    print(files)
+    if (all(files)) {
+        write(glue("\n\n Bowtie does not allow to use gz files, so it needs to be uncompressed before running bowtie \n\n Uncompressing files............ \n\n"), stdout())
+        
+        unpigz <- glue::glue("unpigz -p {procs} {allFiles}")
+        
+        write(glue("\n\n {str_dup('-', max(str_count(unpigz)))} \n \n"), stdout())
+        for (i in 1:length(unpigz)) {
+            print(unpigz[i])
+            system(paste(unpigz[i]))
+        }
+        write(glue("\n\n {str_dup('-', max(str_count(unpigz)))} \n \n"), stdout())
+    }
+    
+    
+    
+    #"SRR13450790_SE_001.fastq"
+    
+    # samples <- samples %>%
+    #     mutate(Read_1 = str_remove(Read_1, ".gz"))
+    # 
+    # #opt$cleanedFolder <- "00-Fastq/"
+    # MappingQuery <- baqcomPackage::createSampleList(
+    #     samples = samples,
+    #     reads_folder = opt$cleanedFolder,
+    #     column = opt$samplesColumn,
+    #     libraryType = opt$libraryType,program = opt$mappingProgram,
+    # )
+    
+}
+
+
+
 #write(glue("\n\n {str_dup('-', 100)} \n\n"), stdout())
 write(glue("\n\n {str_dup('\n', 3)} \n\n"), stdout())
 write(
     glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Total of samples to process \n\n "), 
     stdout()
 )
+
+
+
 MappingQuery <- baqcomPackage::createSampleList(
     samples = samples, 
     reads_folder = opt$cleanedFolder, 
     column = opt$samplesColumn,
-    libraryType = opt$libraryType, program = opt$mappingProgram
+    libraryType = opt$libraryType, 
+    program = opt$mappingProgram
 )
 write(
     glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} "), 
@@ -555,59 +631,6 @@ write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 30)} Mapping started  us
 
 if (opt$mappingProgram == "bowtie") {
     
-    # write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started  using {opt$libraryType} reads \n\n {str_dup('-', 100)} \n\n"), stdout())
-    
-    
-    #write(glue("\n\n Uncompressing files............ \n\n "), stdout())
-    #if (!all(file.exists(list_files_with_exts(index_Folder, exts = ".gz"))))
-    
-    filetype <- function(path){
-        f = file(path)
-        ext = summary(f)$class
-        close.connection(f)
-        ext
-    }
-    #opt$cleanedFolder <- "01-CleanedReadsPair/"
-    # file("00-FastqSingle/SRR13450790_SE_001.fastq.gz")
-    allFiles <- list.files(opt$cleanedFolder)
-    # files <- lapply(allFiles, function(x) filetype(x))
-    # filetype("01-CleanedReadsSingle/SRR13450790_trim_SE.fastq.gz")
-    
-    files <- lapply(allFiles, function(x) stringr::str_detect(x, pattern = "gz"))
-    #files
-    files <- unlist(files)
-    #files
-    #stringr::str_detect(allFiles, pattern = "gz")
-    
-    
-    if (all(files)) {
-        write(glue("\n\n Bowtie does not allow to use gz files, so it needs to be uncompressed before running bowtie \n\n Uncompressing files............ \n\n"), stdout())
-        
-        unpigz <- glue::glue("unpigz {allFiles} -p {procs}")
-        
-        write(glue("\n\n {str_dup('-', max(str_count(unpigz)))} \n \n"), stdout())
-        for (i in 1:length(unpigz)) {
-            print(unpigz[i])
-            system2(unpigz[i])
-        }
-        write(glue("\n\n {str_dup('-', max(str_count(unpigz)))} \n \n"), stdout())
-    }
-    
-    
-    
-    #"SRR13450790_SE_001.fastq"
-    
-    samples <- samples %>%
-        mutate(Read_1 = str_remove(Read_1, ".gz"))
-    
-    #opt$cleanedFolder <- "00-Fastq/"
-    MappingQuery <- baqcomPackage::createSampleList(
-        samples = samples,
-        reads_folder = opt$cleanedFolder,
-        column = opt$samplesColumn,
-        libraryType = opt$libraryType,program = opt$mappingProgram,
-    )
-    
     
     #print(MappingQuery)
     if (opt$libraryType == "singleEnd") {
@@ -689,7 +712,7 @@ if (opt$mappingProgram == "bowtie") {
     
     write(glue("\n\n Bowtie mapping has finished \n\n "), stdout())
     
-    files <- list.files(opt$cleanedFolder)
+    files <- list.files(opt$cleanedFolder, full.names = TRUE)
     if (!all(lapply(files, function(x) filetype(x)) == "gzfile")) {
         write(glue("\n\n Compressing files............ \n\n "), stdout())
         system(
@@ -744,7 +767,7 @@ if (opt$mappingProgram == "bowtie") {
     }
     
 } else if (opt$mappingProgram == "bwa") {
-   
+    
     
     if (opt$libraryType == "singleEnd") {
         bwaSingle <- mclapply(MappingQuery, function(index){
@@ -896,7 +919,7 @@ if (opt$samtools) {
                 )
             )
             
-
+            
             
             
         })
@@ -1013,25 +1036,25 @@ statFiles <- list.files(opt$mappingFolder, pattern = ".flagstat", full.names = T
 for (i in statFiles) { # change this to your "samples"
     #print(i)
     suppressWarnings(report_sample[[i]] <- readr::read_log(
-                                                            i, 
-                                                            show_col_types = FALSE, 
-                                                            col_names = c(
-                                                                "in total (QC-passed reads + QC-failed reads)",
-                                                                'primary',
-                                                                'supplementary',
-                                                                'duplicates',
-                                                                'primary duplicates',
-                                                                'mapped',
-                                                                'primary mapped',
-                                                                'paired in sequencing',
-                                                                'read1',
-                                                                'read2',
-                                                                'properly paired',
-                                                                'with itself and mate mapped',
-                                                                'singletons'
-                                                                )
-                                                            )
-                     )
+        i, 
+        show_col_types = FALSE, 
+        col_names = c(
+            "in total (QC-passed reads + QC-failed reads)",
+            'primary',
+            'supplementary',
+            'duplicates',
+            'primary duplicates',
+            'mapped',
+            'primary mapped',
+            'paired in sequencing',
+            'read1',
+            'read2',
+            'properly paired',
+            'with itself and mate mapped',
+            'singletons'
+        )
+    )
+    )
 }
 
 #list.files("/Users/haniel/OneDrive/posDoc/miRbaqcom/02-MappedReadsBWA/", pattern = ".flagstat")

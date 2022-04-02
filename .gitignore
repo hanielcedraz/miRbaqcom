@@ -26,7 +26,8 @@ logFolder/
 Miniconda3-latest-MacOSX-x86_64.sh
 renv/
 report/
-samplesPais.txt
+samples.txt
+samplesPair.txt
 samplesReal.txt
 samplesSingle.txt
 tempBowtie/
