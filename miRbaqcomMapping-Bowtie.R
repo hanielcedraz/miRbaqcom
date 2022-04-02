@@ -584,6 +584,14 @@ userInput <- function(question) {
 #   stop()
 # }
 
+if (!all(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))) {
+    write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
+    
+    index_genom <- indexBuiding(program = opt$mappingProgram, opt$mappingTarget, index_Folder)
+    
+    write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome finished \n\n {str_dup('-', 100)} \n\n"), stdout())
+}
+
 if (opt$indexBuild) {
     if (!all(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))) {
         write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
