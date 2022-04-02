@@ -631,8 +631,6 @@ write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 30)} Mapping started  us
 
 if (opt$mappingProgram == "bowtie") {
     
-<<<<<<< HEAD
-=======
     # write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Mapping started  using {opt$libraryType} reads \n\n {str_dup('-', 100)} \n\n"), stdout())
     
     
