@@ -585,9 +585,9 @@ userInput <- function(question) {
 # }
 
 if (opt$mappingProgram == "bowtie") {
-    
+    print(index_Folder)
     if (all(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))) {
-        write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Genome is built and all is set for mapping \n\n {str_dup('-', 100)} \n\n"), stdout())
+        write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 30)} Genome is built and all is set for mapping \n\n {str_dup('-', 100)} \n\n"), stdout())
     } else {
         write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
         
