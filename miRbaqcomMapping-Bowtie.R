@@ -652,8 +652,8 @@ write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 30)} Mapping started  us
 
 if (opt$mappingProgram == "bowtie") {
     
-   
-        
+    
+    
     if (opt$libraryType == "singleEnd") {
         bowtieSingle <- mclapply(MappingQuery, function(index) {
             # printing used command in terminal
@@ -1049,38 +1049,39 @@ report_sample <- list()
 statFiles <- list.files(opt$mappingFolder, pattern = ".flagstat", full.names = TRUE)
 for (i in statFiles) { # change this to your "samples"
     #print(i)
-    suppressWarnings(report_sample[[i]] <- readr::read_log(
-        i, 
-        show_col_types = FALSE, 
-        col_names = c(
-            "in total (QC-passed reads + QC-failed reads)",
-            'primary',
-            'supplementary',
-            'duplicates',
-            'primary duplicates',
-            'mapped',
-            'primary mapped',
-            'paired in sequencing',
-            'read1',
-            'read2',
-            'properly paired',
-            'with itself and mate mapped',
-            'singletons'
+    suppressWarnings(
+        report_sample[[i]] <- readr::read_log(
+            i, 
+            #show_col_types = FALSE, 
+            col_names = c(
+                "in total (QC-passed reads + QC-failed reads)",
+                'primary',
+                'supplementary',
+                'duplicates',
+                'primary duplicates',
+                'mapped',
+                'primary mapped',
+                'paired in sequencing',
+                'read1',
+                'read2',
+                'properly paired',
+                'with itself and mate mapped',
+                'singletons'
+            )
         )
-    )
     )
 }
 
 #list.files("/Users/haniel/OneDrive/posDoc/miRbaqcom/02-MappedReadsBWA/", pattern = ".flagstat")
-df <- lapply(report_sample, FUN = function(x) TidyTable(x))
-final_df <- do.call("rbind", df)
+final_df <- lapply(report_sample, FUN = function(x) TidyTable(x)) %>%  bind_rows()
+
 report <- "report"
 if (!file.exists(report)) {
     dir.create(report, recursive = TRUE)
 }
 write.table(final_df, paste0(report,"/report_mapping", opt$mappingProgram, ".log"))
 
-print(data.table::as.data.table(final_df))
+print(final_df)
 
 
 
