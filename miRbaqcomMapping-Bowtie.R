@@ -654,7 +654,7 @@ if (opt$mappingProgram == "bowtie") {
     
    
         
-    else (opt$libraryType == "singleEnd") {
+    if (opt$libraryType == "singleEnd") {
         bowtieSingle <- mclapply(MappingQuery, function(index) {
             # printing used command in terminal
             write(paste("Command:",
