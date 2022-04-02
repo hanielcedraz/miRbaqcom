@@ -1049,26 +1049,29 @@ report_sample <- list()
 statFiles <- list.files(opt$mappingFolder, pattern = ".flagstat", full.names = TRUE)
 for (i in statFiles) { # change this to your "samples"
     #print(i)
-    suppressWarnings(
-        report_sample[[i]] <- readr::read_log(
-            i, 
-            #show_col_types = FALSE, 
-            col_names = c(
-                "in total (QC-passed reads + QC-failed reads)",
-                'primary',
-                'supplementary',
-                'duplicates',
-                'primary duplicates',
-                'mapped',
-                'primary mapped',
-                'paired in sequencing',
-                'read1',
-                'read2',
-                'properly paired',
-                'with itself and mate mapped',
-                'singletons'
+    suppressMessages(
+        suppressWarnings(
+            report_sample[[i]] <- readr::read_log(
+                i, 
+                #show_col_types = FALSE, 
+                col_names = c(
+                    "in total (QC-passed reads + QC-failed reads)",
+                    'primary',
+                    'supplementary',
+                    'duplicates',
+                    'primary duplicates',
+                    'mapped',
+                    'primary mapped',
+                    'paired in sequencing',
+                    'read1',
+                    'read2',
+                    'properly paired',
+                    'with itself and mate mapped',
+                    'singletons'
+                )
             )
         )
+        
     )
 }
 
