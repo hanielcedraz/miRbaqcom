@@ -636,59 +636,59 @@ if (opt$mappingProgram == "bowtie") {
     
     #write(glue("\n\n Uncompressing files............ \n\n "), stdout())
     #if (!all(file.exists(list_files_with_exts(index_Folder, exts = ".gz"))))
-    
-    filetype <- function(path){
-        f = file(path)
-        ext = summary(f)$class
-        close.connection(f)
-        ext
-    }
-    #opt$cleanedFolder <- "01-CleanedReadsPair/"
-    # file("00-FastqSingle/SRR13450790_SE_001.fastq.gz")
-    allFiles <- list.files(opt$cleanedFolder)
-    # files <- lapply(allFiles, function(x) filetype(x))
-    # filetype("01-CleanedReadsSingle/SRR13450790_trim_SE.fastq.gz")
-    
-    files <- lapply(allFiles, function(x) stringr::str_detect(x, pattern = "gz"))
-    #files
-    files <- unlist(files)
-    #files
-    #stringr::str_detect(allFiles, pattern = "gz")
-    
-    
-    if (all(files)) {
-        write(glue("\n\n Bowtie does not allow to use gz files, so it needs to be uncompressed before running bowtie \n\n Uncompressing files............ \n\n"), stdout())
-        
-        unpigz <- glue::glue("unpigz -p {procs} {allFiles} ")
-        
-        write(glue("\n\n {str_dup('-', max(str_count(unpigz)))} \n \n"), stdout())
-        for (i in 1:length(unpigz)) {
-            print(unpigz[i])
-            system2(unpigz[i])
-        }
-        write(glue("\n\n {str_dup('-', max(str_count(unpigz)))} \n \n"), stdout())
-    }
-    
-    
-    
-    #"SRR13450790_SE_001.fastq"
-    
-    samples <- samples %>%
-        mutate(Read_1 = str_remove(Read_1, ".gz"))
-    
-    #opt$cleanedFolder <- "00-Fastq/"
-    MappingQuery <- baqcomPackage::createSampleList(
-        samples = samples,
-        reads_folder = opt$cleanedFolder,
-        column = opt$samplesColumn,
-        libraryType = opt$libraryType,program = opt$mappingProgram,
-    )
-    
->>>>>>> 1ab04be0f1cf45c00ec60ff90a348eb9cea52cc2
-    
-    #print(MappingQuery)
-    if (opt$libraryType == "singleEnd") {
-        
+    # 
+    # filetype <- function(path){
+    #     f = file(path)
+    #     ext = summary(f)$class
+    #     close.connection(f)
+    #     ext
+    # }
+    # #opt$cleanedFolder <- "01-CleanedReadsPair/"
+    # # file("00-FastqSingle/SRR13450790_SE_001.fastq.gz")
+    # allFiles <- list.files(opt$cleanedFolder)
+    # # files <- lapply(allFiles, function(x) filetype(x))
+    # # filetype("01-CleanedReadsSingle/SRR13450790_trim_SE.fastq.gz")
+    # 
+    # files <- lapply(allFiles, function(x) stringr::str_detect(x, pattern = "gz"))
+    # #files
+    # files <- unlist(files)
+    # #files
+    # #stringr::str_detect(allFiles, pattern = "gz")
+    # 
+    # 
+    # if (all(files)) {
+    #     write(glue("\n\n Bowtie does not allow to use gz files, so it needs to be uncompressed before running bowtie \n\n Uncompressing files............ \n\n"), stdout())
+    #     
+    #     unpigz <- glue::glue("unpigz -p {procs} {allFiles} ")
+    #     
+    #     write(glue("\n\n {str_dup('-', max(str_count(unpigz)))} \n \n"), stdout())
+    #     for (i in 1:length(unpigz)) {
+    #         print(unpigz[i])
+    #         system2(unpigz[i])
+    #     }
+    #     write(glue("\n\n {str_dup('-', max(str_count(unpigz)))} \n \n"), stdout())
+    # }
+    # 
+    # 
+    # 
+    # #"SRR13450790_SE_001.fastq"
+    # 
+    # samples <- samples %>%
+    #     mutate(Read_1 = str_remove(Read_1, ".gz"))
+    # 
+    # #opt$cleanedFolder <- "00-Fastq/"
+    # MappingQuery <- baqcomPackage::createSampleList(
+    #     samples = samples,
+    #     reads_folder = opt$cleanedFolder,
+    #     column = opt$samplesColumn,
+    #     libraryType = opt$libraryType,program = opt$mappingProgram,
+    # )
+    # 
+    # 
+    # 
+    # #print(MappingQuery)
+    # if (opt$libraryType == "singleEnd") {
+    #     
         
         
         # write(glue("\n\n {str_dup('-', 100)} \n\n Starting Bowtie Mapping Single-End \n\n {str_dup('-', 100)}"), stdout())
