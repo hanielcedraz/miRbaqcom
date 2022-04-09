@@ -9,6 +9,8 @@ suppressPackageStartupMessages(library("glue"))
 suppressPackageStartupMessages(library("baqcomPackage"))
 suppressPackageStartupMessages(library("stringr"))
 suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("purrr"))
+suppressPackageStartupMessages(library("readr"))
 
 source("~/OneDrive/posDoc/miRbaqcom/scr/createSampleListFunction.R")
 source("~/OneDrive/posDoc/miRbaqcom/scr/loadSamplesFileFunction.R")

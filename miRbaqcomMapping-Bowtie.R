@@ -36,15 +36,15 @@
 # ########################################
 # ### LOADING PACKAGES
 # ########################################
-# suppressPackageStartupMessages(library("tools"))
-# suppressPackageStartupMessages(library("optparse"))
-# suppressPackageStartupMessages(library("parallel"))
-# suppressPackageStartupMessages(library("glue"))
-# suppressPackageStartupMessages(library("baqcomPackage"))
-# suppressPackageStartupMessages(library("stringr"))
-# suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("tools"))
+suppressPackageStartupMessages(library("optparse"))
+suppressPackageStartupMessages(library("parallel"))
+suppressPackageStartupMessages(library("glue"))
+suppressPackageStartupMessages(library("baqcomPackage"))
+suppressPackageStartupMessages(library("stringr"))
+suppressPackageStartupMessages(library("dplyr"))
 
-source("sourceFunctions.R")
+#source("sourceFunctions.R")
 #source("~/Documents/baqcomPackage/R/createSampleListFunction.R")
 ########################################
 ### SETING PARAMETERS
