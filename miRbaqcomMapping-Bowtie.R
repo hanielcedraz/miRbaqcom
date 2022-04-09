@@ -29,21 +29,22 @@
 #     paste("conda install -c bioconda bowtie")
 # )
 
-if (!require(baqcomPackage, quietly = TRUE)) {
-    devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "always", quiet = TRUE, force = TRUE)
-}
-#suppressPackageStartupMessages(devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "never", quiet = TRUE, force = TRUE))
-########################################
-### LOADING PACKAGES
-########################################
-suppressPackageStartupMessages(library("tools"))
-suppressPackageStartupMessages(library("optparse"))
-suppressPackageStartupMessages(library("parallel"))
-suppressPackageStartupMessages(library("glue"))
-suppressPackageStartupMessages(library("baqcomPackage"))
-suppressPackageStartupMessages(library("stringr"))
-suppressPackageStartupMessages(library("dplyr"))
+# if (!require(baqcomPackage, quietly = TRUE)) {
+#     devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "always", quiet = TRUE, force = TRUE)
+# }
+# #suppressPackageStartupMessages(devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "never", quiet = TRUE, force = TRUE))
+# ########################################
+# ### LOADING PACKAGES
+# ########################################
+# suppressPackageStartupMessages(library("tools"))
+# suppressPackageStartupMessages(library("optparse"))
+# suppressPackageStartupMessages(library("parallel"))
+# suppressPackageStartupMessages(library("glue"))
+# suppressPackageStartupMessages(library("baqcomPackage"))
+# suppressPackageStartupMessages(library("stringr"))
+# suppressPackageStartupMessages(library("dplyr"))
 
+source("sourceFunctions.R")
 #source("~/Documents/baqcomPackage/R/createSampleListFunction.R")
 ########################################
 ### SETING PARAMETERS
@@ -313,7 +314,7 @@ write(
 
 #opt$samplesFile <- "/Users/haniel/OneDrive/posDoc/miRbaqcom/samplesReal.txt"
 #opt$cleanedFolder <- "/Users/haniel/OneDrive/posDoc/miRbaqcom/01-CleanedReadsReal/"
-samples <- baqcomPackage::loadSamplesFile(
+samples <- loadSamplesFile(
     file = opt$samplesFile, 
     reads_folder = opt$cleanedFolder, 
     column = opt$samplesColumn, 
@@ -331,7 +332,7 @@ write(
     glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 30)} Numbers of threads to be used \n\n "), 
     stdout()
 )
-procs <- baqcomPackage::prepareCore(nThreads = opt$procs)
+procs <- prepareCore(nThreads = opt$procs)
 #write(glue("\n\n {str_dup('\n', 5)} \n\n"), stdout())
 write(glue("\n\n {str_dup('-', 100)} \n\n"), stdout())
 write(glue("\n\n {str_dup('\n', 3)} \n\n"), stdout())
@@ -422,7 +423,7 @@ write(
 
 
 
-MappingQuery <- baqcomPackage::createSampleList(
+MappingQuery <- createSampleList(
     samples = samples, 
     reads_folder = opt$cleanedFolder, 
     column = opt$samplesColumn,
