@@ -586,13 +586,14 @@ userInput <- function(question) {
 # }
 
 if (opt$mappingProgram == "bowtie") {
-    print(index_Folder)
+
     #indexFiles <- list.files(index_Folder, pattern = "ebwt")
     if (any(file.exists(list_files_with_exts(index_Folder, exts = "ebwt")))) {
         write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 30)} Genome is built and all is set for mapping \n\n {str_dup('-', 100)} \n\n"), stdout())
+        write(glue::glue("Using genome index from {index_Folder}"), stdout())
     } else {
         write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
-        
+        write(glue::glue("Genome index will be saved into {index_Folder}"), stdout())
         index_genom <- indexBuiding(program = opt$mappingProgram, opt$mappingTarget, index_Folder)
         
         write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome finished \n\n {str_dup('-', 100)} \n\n"), stdout())
@@ -1027,6 +1028,7 @@ if (opt$deleteSAMfiles) {
 
 TidyTable <- function(x) {
     final <- tibble::tibble(
+        Samples = samples$SAMPLE_ID,
         "in total (QC-passed reads + QC-failed reads)" = x[1,1],
         'primary' = x[2,1],
         'supplementary' = x[3,1],
@@ -1056,6 +1058,7 @@ for (i in statFiles) { # change this to your "samples"
                 i, 
                 #show_col_types = FALSE, 
                 col_names = c(
+                    "Samples",
                     "in total (QC-passed reads + QC-failed reads)",
                     'primary',
                     'supplementary',
