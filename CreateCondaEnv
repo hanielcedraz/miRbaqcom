@@ -65,9 +65,12 @@ conda install -c bioconda picard-slim
 conda install -c bioconda bowtie
 conda install -c bioconda multiqc
 conda install -c bioconda fastp
-mamba install -c r r
+
 conda install -c conda-forge mongodb
 
+## Install R and R packages
+mamba install -c r r
+mamba install r-packageName=version
 
 
 # Save stgen yaml file
