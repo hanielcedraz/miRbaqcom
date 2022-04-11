@@ -1,0 +1,77 @@
+# Download Miniconda installer
+wget https://repo.anaconda.com/miniconda/Miniconda3-py37_4.11.0-Linux-x86_64.sh
+
+
+
+# Install miniconda
+bash Miniconda3-py37_4.11.0-Linux-x86_64.sh
+
+
+
+# Set auto activate base to false (optional)
+conda config --set auto_activate_base false
+
+
+
+# Update conda to the latest version if needed
+conda update conda
+
+
+
+# Display active channels
+conda config --show channels
+
+
+
+# Append new channels
+conda config --append channels r
+
+# Create stgen env from yaml
+conda env create -f baqcomEnv.yaml
+
+# Install mamba from conda-forge channel in the base env
+conda install -n base -c conda-forge mamba
+
+
+
+# Activate conda base env
+conda activate base
+
+
+
+# Create mamba stgen env installing snakemake from bioconda
+mamba create -c conda-forge -c bioconda -n stgen snakemake
+
+
+
+# Activate stgen env
+conda activate stgen
+
+
+
+# installing packages
+conda install -c bioconda plink
+conda install -c bioconda samtools
+conda install -c soil eagle-phase
+conda install -c bioconda beagle
+conda install -c bioconda fastqc
+conda install -c bioconda bcftools
+conda install -c bioconda vcftools
+conda install -c bioconda gcta
+conda install -c bioconda bwa
+conda install -c bioconda gatk4
+conda install -c bioconda shapeit4
+conda install -c bioconda picard-slim
+conda install -c bioconda bowtie
+conda install -c bioconda multiqc
+conda install -c bioconda fastp
+mamba install -c r r
+conda install -c conda-forge mongodb
+
+
+
+# Save stgen yaml file
+conda env export -n stgen > baqcomEnv.yaml
+
+
+
