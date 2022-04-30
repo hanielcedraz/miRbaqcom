@@ -65,6 +65,7 @@ conda install -c bioconda picard-slim
 conda install -c bioconda bowtie
 conda install -c bioconda multiqc
 conda install -c bioconda fastp
+conda install -c bioconda cutadapt
 
 conda install -c conda-forge mongodb
 
