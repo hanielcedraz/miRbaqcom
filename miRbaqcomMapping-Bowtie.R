@@ -383,7 +383,7 @@ if (opt$mappingProgram == "bowtie") {
     
     
     if (all(files)) {
-        write(glue("\n\n Bowtie does not allow to use gz files, so it needs to be uncompressed before running bowtie \n\n Uncompressing files............ \n\n"), stdout())
+        write(glue::glue("\n\n Bowtie does not allow to use gz files, so it needs to be uncompressed before running bowtie \n\n Uncompressing files............ \n\n"), stdout())
         
         unpigz <- glue::glue("unpigz -p {procs} {allFiles}")
         

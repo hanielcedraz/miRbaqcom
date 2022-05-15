@@ -20,13 +20,13 @@ suppressPackageStartupMessages(library("baqcomPackage"))
 
 
 option_list <- list(
-    make_option(
-        opt_str = c("-i", "--install"),
-        type = "logical",
-        default = TRUE,
-        help = "Wether install UMI-Tools or not",
-        dest = "installUMItools"
-    ),
+    # make_option(
+    #     opt_str = c("-i", "--install"),
+    #     type = "logical",
+    #     default = TRUE,
+    #     help = "Wether install UMI-Tools or not",
+    #     dest = "installUMItools"
+    # ),
     make_option(
         opt_str = c("-f", "--file"), 
         type = "character", 
@@ -35,7 +35,7 @@ option_list <- list(
         dest = "samplesFile"
     ),
     make_option(
-        opt_str = c("-d", "--directory"), 
+        opt_str = c("-i", "--inputDirectory"), 
         type = "character", 
         default = "00-Fastq",
         help = "Directory where the raw sequence data is stored [default %default]",
@@ -49,7 +49,7 @@ option_list <- list(
         dest = "samplesColumn"
     ),
     make_option(
-        opt_str = c("-O", "--option"),
+        opt_str = c("-O", "--umiOption"),
         type = "character",
         default = "extract",
         help = glue(
@@ -57,30 +57,44 @@ option_list <- list(
         ),
         dest = "umiCommand"
     ),
-    # make_option(
-    #     opt_str = c("-t", "--mappingTargets"), 
-    #     type = "character", 
-    #     default = "mapping_targets.fa",
-    #     help = glue("Path to the fasta file [target fasta] to run mapping against (default %default); or path to the directory where the genome indices are stored (path/to/the/genoma_file/index_STAR."),
-    #     dest = "mappingTarget"
-    # ),
+    make_option(
+        opt_str = c("-e", "--extractMethod"),
+        type = "character",
+        default = "string",
+        help = glue("If %umiOption extract, how to extract the umi +/- cell barcodes, Choose from 'string' or 'regex' [default %default]"),
+        dest = "extractMethod"
+    ),
+    make_option(
+        opt_str = c("-d", "--discardRegex"),
+        action = 'store_true',
+        type = "logical",
+        default = FALSE,
+        help = "If %extractMethod regex, wheter to discard bases before and after barcode/umi  [default %default]",
+        dest = "discard"
+    ),
     make_option(
         opt_str = c("-a", "--bcPattern"), 
         type  = 'character', 
         default = 'NNNXXXXNN',
         help = glue(
-            "Several techniques that use UMIs mix the UMI sequence in with a library barcode. In this case we want to remove the random part of the barcodes, but leave the library part so that the reads can be de-multiplexed. We specify this using the `--bcPattern` or short flag `-a` parameter to extract. Ns represent the random part of the barcode and Xs the fixed part. For example, in a standard iCLIP experiment, the barcode is made of 3 random bases, followed by a 4 base library barcode, followed by 2 more random bases. Thus the `--bcPattern` or short flag `-a` would be 'NNNXXXXNN'. [default %default],",  .sep = "\n"
+            "Several techniques that use UMIs mix the UMI sequence in with a library barcode. In this case we want to remove the random part of the barcodes, but leave the library part so that the reads can be de-multiplexed. We specify this using the `--bcPattern` or short flag `-a` parameter to extract. Ns represent the random part of the barcode and Xs the fixed part. For example, in a standard iCLIP experiment, the barcode is made of 3 random bases, followed by a 4 base library barcode, followed by 2 more random bases. Thus the `--bcPattern` or short flag `-a` would be 'NNNXXXXNN'. [default %default]. If %extractMethod regex, bcPattern must be a sequence of bases as adapter.",  .sep = "\n"
         ),
         dest = "bcPattern"
     ),
-    # make_option(
-    #     opt_str = c("-r", "--multiqc"), 
-    #     action = 'store_true', 
-    #     type = "logical",
-    #     default = FALSE,
-    #     help = "Use this option if you want to run multiqc software  [default %default]",
-    #     dest = "multiqc"
-    # ),
+    make_option(
+        opt_str = c("-s", "--mismatch"),
+        type = "integer",
+        default = 2,
+        help = "How many mismatch are allowed in the adapter (bcPattern)  [default %default]",
+        dest = "misMatchAllowed"
+    ),
+    make_option(
+        opt_str = c('-u', '--umiLength'),
+        type = 'integer',
+        default = 12,
+        help = "How many bases for the UMI sequence  [default %default]",
+        dest = 'umiLength'
+    ),
     make_option(
         opt_str = c("-o", "--output"), 
         type = "character", 
@@ -101,13 +115,7 @@ option_list <- list(
         help = "Number of samples to process at each time [default %default]",
         dest = "sampleToprocs"
     ),
-    # make_option(
-    #     opt_str = c('-s', '--sliding'), 
-    #     type = 'integer', 
-    #     default = 20,
-    #     help = 'Quality sliding to use during trimming. Perform a sliding window trimming, cutting once the average quality within the window falls below a threshold. [default %default]',
-    #     dest = 'qual'
-    # ),
+
     # make_option(
     #     opt_str = c('-w', '--window'), 
     #     type = 'integer', 
@@ -293,8 +301,20 @@ if (opt$umiCommand == "extract") {
         reads_folder = opt$rawFolder, 
         column = opt$samplesColumn, fileType = "fastq.gz", 
         libraryType = opt$libraryType, 
-        step = "QualityControl"
+        program = "trimmomatic"
     )
+    opt$extractMethod <- "regex"
+    opt$discard <- FALSE
+    opt$bcPattern <- "AACTGTAGGCACCATCAAT"
+    if (opt$extractMethod == "regex") {
+        if (opt$discard) {
+            opt$bcPattern <- paste0("'.+(?P<discard_1>",opt$bcPattern, "){s<=", opt$misMatchAllowed, "}(?P<umi_1>.{",opt$umiLength,"})'")
+        } else {
+            opt$bcPattern <- paste0("'.+(",opt$bcPattern, "){s<=", opt$misMatchAllowed, "}(?P<umi_1>.{",opt$umiLength,"})'")
+        }
+        
+    }
+    
     cat("####===============================================================\n List of samples to process\n")
     print(umiQuery)
     cat("\n")
@@ -306,10 +326,11 @@ if (opt$umiCommand == "extract") {
                     paste(
                         "umi_tools",
                         "extract",
-                        paste("-I", paste0(opt$rawFolder, "/", index$R1)),
-                        paste("--bc-pattern", opt$bcPattern, sep = "="),
-                        paste("--read2-in", paste0(opt$rawFolder, "/", index$R2), sep = "="),
-                        paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE1.fastq.gz"), sep = "="),
+                        paste0("-I", paste0(opt$rawFolder, "/", index$R1)),
+                        paste0("--extract-method=", opt$extractMethod),
+                        paste0("--bc-pattern", opt$bcPattern, sep = "="),
+                        paste0("--read2-in", paste0(opt$rawFolder, "/", index$R2), sep = "="),
+                        paste0("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE1.fastq.gz"), sep = "="),
                         paste("--read2-out", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE2.fastq.gz"), sep = "=")
                     )
                 )
@@ -334,9 +355,10 @@ if (opt$umiCommand == "extract") {
                     paste(
                         "umi_tools",
                         "extract",
-                        paste("--stdin", paste0(opt$rawFolder, "/", index$SE)),
-                        paste("--bc-pattern", opt$bcPattern, sep = "="),
-                        paste("--log", paste0(logFolder, "/", index$sampleName, "_extracted.log"), sep = "="),
+                        paste0("--stdin", paste0(opt$rawFolder, "/", index$SE), sep = "="),
+                        paste0("--extract-method=", opt$extractMethod),
+                        paste0("--bc-pattern", opt$bcPattern, sep = "="),
+                        paste0("--log", paste0(logFolder, "/", index$sampleName, "_extracted.log"), sep = "="),
                         paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"), sep = "=")
                     )
                 )
@@ -359,8 +381,9 @@ if (opt$umiCommand == "extract") {
         reads_folder = opt$rawFolder, 
         column = opt$samplesColumn, fileType = "bam", 
         libraryType = opt$libraryType, 
-        step = "QualityControl"
+        program = "trimmomatic"
     )
+
     cat("####===============================================================\n List of samples to process\n")
     print(umiQuery)
     cat("\n")
