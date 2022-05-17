@@ -355,11 +355,11 @@ if (opt$umiCommand == "extract") {
                     paste(
                         "umi_tools",
                         "extract",
-                        paste0("--stdin", paste0(opt$rawFolder, "/", index$SE), sep = "="),
+                        paste0("--stdin=", paste0(opt$rawFolder, "/", index$SE)),
                         paste0("--extract-method=", opt$extractMethod),
-                        paste0("--bc-pattern", opt$bcPattern, sep = "="),
-                        paste0("--log", paste0(logFolder, "/", index$sampleName, "_extracted.log"), sep = "="),
-                        paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"), sep = "=")
+                        paste0("--bc-pattern=", opt$bcPattern),
+                        paste0("--log=", paste0(logFolder, "/", index$sampleName, "_extracted.log")),
+                        paste("--stdout=", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"))
                     )
                 )
             })
