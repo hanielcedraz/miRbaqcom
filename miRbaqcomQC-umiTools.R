@@ -303,9 +303,9 @@ if (opt$umiCommand == "extract") {
         libraryType = opt$libraryType, 
         program = "trimmomatic"
     )
-    opt$extractMethod <- "regex"
-    opt$discard <- FALSE
-    opt$bcPattern <- "AACTGTAGGCACCATCAAT"
+    #opt$extractMethod <- "regex"
+    #opt$discard <- FALSE
+    #opt$bcPattern <- "AACTGTAGGCACCATCAAT"
     if (opt$extractMethod == "regex") {
         if (opt$discard) {
             opt$bcPattern <- paste0("'.+(?P<discard_1>",opt$bcPattern, "){s<=", opt$misMatchAllowed, "}(?P<umi_1>.{",opt$umiLength,"})'")
