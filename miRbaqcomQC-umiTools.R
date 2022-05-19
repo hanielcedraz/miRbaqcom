@@ -349,13 +349,29 @@ if (opt$umiCommand == "extract") {
         
     } else if (opt$libraryType == "singleEnd") {
         cat("\nStarting umi extract for Single-End library\n\n")
+        
         umisingle <- mclapply(umiQuery, function(index) {
+            write(paste(
+                "umi_tools",
+                "extract",
+                paste0("--stdin=", index$SE),
+                paste0("--extract-method=", opt$extractMethod),
+                paste0("--bc-pattern=", opt$bcPattern),
+                paste0("--log=", paste0(logFolder, "/", index$sampleName, "_extracted.log")),
+                paste("--stdout=", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"))
+            ), stdout())
+            cat("\n")
+            
             try({
                 system(
                     paste(
                         "umi_tools",
                         "extract",
+<<<<<<< HEAD
+                        paste0("--stdin=", index$SE),
+=======
                         paste0("--stdin=", paste0(opt$rawFolder, "/", index$SE)),
+>>>>>>> 356eba49262dd20cb26a8e85c1b1f6a60c20d5d3
                         paste0("--extract-method=", opt$extractMethod),
                         paste0("--bc-pattern=", opt$bcPattern),
                         paste0("--log=", paste0(logFolder, "/", index$sampleName, "_extracted.log")),
