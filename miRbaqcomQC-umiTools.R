@@ -303,9 +303,9 @@ if (opt$umiCommand == "extract") {
         libraryType = opt$libraryType, 
         program = "trimmomatic"
     )
-    opt$extractMethod <- "regex"
-    opt$discard <- FALSE
-    opt$bcPattern <- "AACTGTAGGCACCATCAAT"
+    #opt$extractMethod <- "regex"
+    #opt$discard <- FALSE
+    #opt$bcPattern <- "AACTGTAGGCACCATCAAT"
     if (opt$extractMethod == "regex") {
         if (opt$discard) {
             opt$bcPattern <- paste0("'.+(?P<discard_1>",opt$bcPattern, "){s<=", opt$misMatchAllowed, "}(?P<umi_1>.{",opt$umiLength,"})'")
@@ -367,7 +367,11 @@ if (opt$umiCommand == "extract") {
                     paste(
                         "umi_tools",
                         "extract",
+<<<<<<< HEAD
                         paste0("--stdin=", index$SE),
+=======
+                        paste0("--stdin=", paste0(opt$rawFolder, "/", index$SE)),
+>>>>>>> 356eba49262dd20cb26a8e85c1b1f6a60c20d5d3
                         paste0("--extract-method=", opt$extractMethod),
                         paste0("--bc-pattern=", opt$bcPattern),
                         paste0("--log=", paste0(logFolder, "/", index$sampleName, "_extracted.log")),
