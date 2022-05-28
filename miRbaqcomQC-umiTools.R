@@ -321,17 +321,29 @@ if (opt$umiCommand == "extract") {
     if (opt$libraryType == "pairEnd") {
         cat("\nStarting umi extract for Peired-End library\n\n")
         umiPair <- mclapply(umiQuery, function(index) {
+            ## Printing the command line in terminal
+            write(paste(
+                "umi_tools",
+                "extract",
+                paste0("-I", index$R1),
+                paste0("--extract-method=", opt$extractMethod),
+                paste0("--bc-pattern=", opt$bcPattern),
+                paste0("--read2-in=", index$R2),
+                paste0("--stdout=", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE1.fastq.gz")),
+                paste("--read2-out=", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE2.fastq.gz"))
+            ), stdout())
+            
             try({
                 system(
                     paste(
                         "umi_tools",
                         "extract",
-                        paste0("-I", paste0(opt$rawFolder, "/", index$R1)),
+                        paste0("-I", index$R1),
                         paste0("--extract-method=", opt$extractMethod),
-                        paste0("--bc-pattern", opt$bcPattern, sep = "="),
-                        paste0("--read2-in", paste0(opt$rawFolder, "/", index$R2), sep = "="),
-                        paste0("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE1.fastq.gz"), sep = "="),
-                        paste("--read2-out", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE2.fastq.gz"), sep = "=")
+                        paste0("--bc-pattern=", opt$bcPattern),
+                        paste0("--read2-in=", index$R2),
+                        paste0("--stdout=", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE1.fastq.gz")),
+                        paste("--read2-out=", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE2.fastq.gz"))
                     )
                 )
             })
@@ -367,11 +379,7 @@ if (opt$umiCommand == "extract") {
                     paste(
                         "umi_tools",
                         "extract",
-<<<<<<< HEAD
                         paste0("--stdin=", index$SE),
-=======
-                        paste0("--stdin=", paste0(opt$rawFolder, "/", index$SE)),
->>>>>>> 356eba49262dd20cb26a8e85c1b1f6a60c20d5d3
                         paste0("--extract-method=", opt$extractMethod),
                         paste0("--bc-pattern=", opt$bcPattern),
                         paste0("--log=", paste0(logFolder, "/", index$sampleName, "_extracted.log")),
@@ -397,7 +405,7 @@ if (opt$umiCommand == "extract") {
         reads_folder = opt$rawFolder, 
         column = opt$samplesColumn, fileType = "bam", 
         libraryType = opt$libraryType, 
-        program = "trimmomatic"
+        program = "htseq"
     )
 
     cat("####===============================================================\n List of samples to process\n")
@@ -409,7 +417,7 @@ if (opt$umiCommand == "extract") {
                 paste(
                     "umi_tools",
                     "dedup",
-                    paste("--stdin", paste0(opt$rawFolder, "/", index$SE)),
+                    paste("--stdin", index$SE, sep = "="),
                     paste("--bc-pattern", opt$bcPattern, sep = "="),
                     paste("--log", paste0(logFolder, "/", index$sampleName, "_extracted.log"), sep = "="),
                     paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"), sep = "=")
