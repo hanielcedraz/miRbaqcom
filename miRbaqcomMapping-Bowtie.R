@@ -1,38 +1,5 @@
 #!/usr/bin/env Rscript
 
-
-# Create a new conda environment with all the r-essentials conda packages built from CRAN:
-#     
-#     conda create -n r_env r-essentials r-base
-# 
-# Activate the environment:
-#     
-#     conda activate r_env
-# 
-# List the packages in the environment:
-#     
-#     conda list
-
-
-
-# Sys.which(paste0("conda"))
-# # system(
-# #     paste("conda create -n r_env r-essentials r-base")
-# # )
-# system(
-#     paste("conda init")
-# )
-# system(
-#     paste("conda activate r_env")
-# )
-# system(
-#     paste("conda install -c bioconda bowtie")
-# )
-
-# if (!require(baqcomPackage, quietly = TRUE)) {
-#     devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "always", quiet = TRUE, force = TRUE)
-# }
-# #suppressPackageStartupMessages(devtools::install_github(repo = "git@github.com:hanielcedraz/baqcomPackage.git", upgrade = "never", quiet = TRUE, force = TRUE))
 # ########################################
 # ### LOADING PACKAGES
 # ########################################
@@ -55,14 +22,6 @@ suppressPackageStartupMessages(library("dplyr"))
 # help="Show this help message and exit")
 
 option_list <- list(
-    # make_option(
-    #     opt_str = c("-u", "--useConda"),
-    #     action = 'store_true', 
-    #     type = "logical",
-    #     default = FALSE,
-    #     help = "Wether to use conda enviroment",
-    #     dest = "useConda"
-    # ),
     make_option(
         opt_str = c("-f", "--file"), 
         type = "character", 
@@ -238,37 +197,6 @@ if (!file.exists(file.path(opt$mappingFolder))) {
 }
 
 
-########################################
-### CHECKING IF BOWTIE EXIST IN THE SYSTEM
-########################################
-
-
-
-# pwdInstal <- paste0(getwd(), "/programs/")
-# umiToolsInstalled <- Sys.which(paste0(pwdInstal,"UMI-Tools/bin/umi_tools"))
-# pipInstalled <- Sys.which("pip3")
-# if (opt$installUMItools) {
-#     if (nchar(pipInstalled) == 0) {
-#         write(paste("pip is not installed. pip is required in order to install UMI-tools. Installing pip..."), stderr())
-#         system("python3 -m pip install --upgrade pip")
-#     } 
-#     if (nchar(umiToolsInstalled) == 0) {
-#         write("umi_tools is dependent on python>=3.5, numpy, pandas, scipy, cython, pysam, future, regex and matplotlib", stdout())
-#         write(paste("Installing UMItools"), stderr())
-#         #system("pip3 install umi_tools --user")
-#         system(paste0("pip3 install --target=", pwdInstal, "UMI-Tools/ umi_tools --no-warn-script-location"))
-#         cat("/n")
-#         write(paste("umi_tools was installed in", pwdInstal, "UMI-Tools/bin/"), stderr())
-#         umi_tools <- paste(pwdInstal, "UMI-Tools/bin/umi_tools")
-#     }
-# }
-
-
-# if (detectCores() < opt$procs) {
-#     write(paste("number of cores specified (", opt$procs,") is greater than the number of cores available (",detectCores(),")"), stdout())
-#     paste('Using ', detectCores(), 'threads')
-# }
-
 
 externalPar <- opt$externalParameters
 if (file.exists(externalPar)) {
@@ -298,22 +226,7 @@ write(
 )
 #opt$libraryType <- "pairEnd"
 
-# samples <- baqcomPackage::loadSamplesFile(
-#     file = "samplesSingle.txt",
-#     reads_folder = "01-CleanedReadsSingle/",
-#     column = opt$samplesColumn, libraryType = "singleEnd"
-# )
-# # 
-# baqcomPackage::createSampleList(
-#     samples = samples,
-#     reads_folder = "01-CleanedReadsSingle/",
-#     column = opt$samplesColumn,
-#     libraryType = "singleEnd",
-#     program = opt$mappingProgram
-# )
 
-#opt$samplesFile <- "/Users/haniel/OneDrive/posDoc/miRbaqcom/samplesReal.txt"
-#opt$cleanedFolder <- "/Users/haniel/OneDrive/posDoc/miRbaqcom/01-CleanedReadsReal/"
 samples <- loadSamplesFile(
     file = opt$samplesFile, 
     reads_folder = opt$cleanedFolder, 
@@ -633,6 +546,51 @@ if (opt$mappingProgram == "bowtie") {
     }
     
     
+} else if (opt$mappingProgram == "bwa") {
+    #indexFiles <- list.files(index_Folder, pattern = "ebwt")
+    if (any(file.exists(list_files_with_exts(index_Folder, exts = "pac")))) {
+        write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 30)} Genome is built and all is set for mapping \n\n {str_dup('-', 100)} \n\n"), stdout())
+        write(glue::glue("Using genome index from {index_Folder}"), stdout())
+    } else {
+        write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
+        write(glue::glue("Genome index will be saved into {index_Folder}"), stdout())
+        index_genom <- indexBuiding(program = opt$mappingProgram, opt$mappingTarget, index_Folder)
+        
+        write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome finished \n\n {str_dup('-', 100)} \n\n"), stdout())
+    }
+    
+    
+    
+    if (opt$indexBuild) {
+        if (!any(file.exists(list_files_with_exts(index_Folder, exts = "pac")))) {
+            write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
+            
+            index_genom <- indexBuiding(program = opt$mappingProgram, opt$mappingTarget, index_Folder)
+            
+            write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome finished \n\n {str_dup('-', 100)} \n\n"), stdout())
+        } else{
+            write(paste("Index genome files already exists."), stderr())
+            repeat {
+                inp <- userInput("Would you like to delete and re-run index generation? ([yes] or no) ")
+                #imp <- "yes"
+                if (inp %in% c("yes", "no", "", "Y", "y", "N", "n")) {
+                    write(glue("\n\n Buiding genome skiped \n\n"), stdout())
+                    break()
+                    
+                } else {
+                    write("Specify 'yes' or 'no'", stderr())
+                }
+            }
+            if (any(inp %in% c("yes", "", "Y", "y"))) {
+                write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome started \n\n {str_dup('-', 100)} \n\n"), stdout())
+                
+                index_genom <- indexBuiding(program = opt$mappingProgram, opt$mappingTarget, index_Folder)
+                
+                write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Buiding genome finished \n\n {str_dup('-', 100)} \n\n"), stdout())
+            }
+        }
+        
+    }
 }
 
 
@@ -884,68 +842,34 @@ if (opt$samtools) {
         write(paste("Something went wrong with samtools processing some jobs failed"),stderr())
         stop()
     }
-    
-    
-    
-    # samtools.run <- mclapply(santools.map, function(index){
-    #     write(paste('Starting convert sam to bam with samtools:', index$sampleName), stderr())
-    #     try({
-    #         system(paste('samtools',
-    #                      'sort',
-    #                      paste('--threads', procs),
-    #                      paste0(index$unsorted_sample, collapse = ","),
-    #                      '>', paste0(opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.bam')))})
-    # }, mc.cores = opt$sampleToprocs
-    # )
-    # 
-    # 
-    # if (!all(sapply(samtools.run, "==", 0L))) {
-    #     stop(paste("Something went wrong with SAMTOOLS. Some jobs failed"))
-    #     
-    # }
-    
-} else {
-    
-    
-    write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Generating stats\n\n {str_dup('-', 100)} \n\n"), stdout())
-    
-    samtools_out <- mclapply(santools.map, function(index){
-        #dir.create(file.path(opt$mappingFolder, index$sampleName))
-        try({
-            # system(
-            #     paste(
-            #         'samtools',
-            #         'depth -a',
-            #         paste('--threads', procs),
-            #         paste0(index$unsorted_sample, collapse = ","),
-            #         paste("| awk '{c++; if($3>0) total+=1}END{print (total/c)*100}'"),
-            #         paste0(" > ", opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.depth')
-            #     )
-            # )
-            
-            #samtools depth -a file.bam | awk '{c++; if($3>0) total+=1}END{print (total/c)*100}'
-            
-            system(
-                paste(
-                    'samtools',
-                    'flagstat',
-                    paste('--threads', procs),
-                    paste0(index$unsorted_sample, collapse = ","),
-                    '>', paste0(opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.flagstat')
-                )
+} 
+
+
+
+
+
+write(glue("\n\n {str_dup('-', 100)} \n\n {str_dup(' ', 40)} Generating stats\n\n {str_dup('-', 100)} \n\n"), stdout())
+
+mappingStats <- mclapply(santools.map, function(index) {
+    #dir.create(file.path(opt$mappingFolder, index$sampleName))
+    try({
+        system(
+            paste(
+                'samtools',
+                'flagstat',
+                paste('--threads', procs),
+                paste0(index$unsorted_sample, collapse = ","),
+                '>', paste0(opt$mappingFolder,'/', index$sampleName, '_sam_sorted_pos.flagstat')
             )
-            
-            
-            
-            
-        })
-    }, mc.cores = procs)
-    
-    if (!all(sapply(samtools_out, "==", FALSE))){
-        write(paste("Something went wrong with samtools processing some jobs failed"),stderr())
-        stop()
-    }
+        )
+    })
+}, mc.cores = procs)
+
+if (!all(sapply(mappingStats, "==", FALSE))){
+    write(paste("Something went wrong with samtools processing some jobs failed"),stderr())
+    stop()
 }
+
 
 
 
@@ -1029,66 +953,57 @@ if (opt$deleteSAMfiles) {
 TidyTable <- function(x) {
     final <- tibble::tibble(
         Samples = samples$SAMPLE_ID,
-        "in total (QC-passed reads + QC-failed reads)" = x[1,1],
-        'primary' = x[2,1],
-        'supplementary' = x[3,1],
-        'duplicates' = x[4,1],
-        'primary duplicates' = x[5,1],
-        'mapped' = glue::glue("{x[7,1]} {x[7,5]})"),
-        'primary mapped' = glue::glue("{x[7,1]} {x[8,6]})"),
-        'paired in sequencing' = x[8,1],
-        'read1' = x[9,1],
-        'read2' = x[10,1],
-        'properly paired' = glue::glue("{x[11,1]} {x[8,6]})"),
-        'with itself and mate mapped' = x[12,1],
-        'singletons' = glue::glue("{x[13,1]} {x[8,6]})")
+        "In_total_QC-passed_reads_plus_QC-failed_reads" = paste(x[1,1], x[1,3], sep = " + "),
+        "Primary" = paste(x[2,1], x[2,3], sep = " + "),
+        "Secondary" = paste(x[3,1], x[3,3], sep = " + "),
+        "Supplementary" = paste(x[4,1], x[4,3], sep = " + "),
+        "Duplicates" = paste(x[5,1], x[5,3], sep = " + "),
+        "Primary_duplicates" = paste(x[6,1], x[6,3], sep = " + "),
+        "Mapped_(N/A:N/A)" = paste(x[7,1], x[7,3], sep = " + "),
+        "Primary_mapped_(N/A:N/A)" = paste(x[8,1], x[8,3], sep = " + "),
+        "Paired_in_sequencing" = paste(x[9,1], x[9,3], sep = " + "),
+        "Read1" = paste(x[10,1], x[10,3], sep = " + "),
+        "Read2" = paste(x[11,1], x[11,3], sep = " + "),
+        "Properly_paired_(N/A:N/A)" = paste(x[12,1], x[12,3], sep = " + "),
+        "With_itself_and_mate_mapped" = paste(x[13,1], x[13,3], sep = " + "),
+        "Singletons_(N/A:N/A)" = paste(x[14,1], x[14,3], sep = " + "),
+        "With_mate_mapped_to_a_different_chr" = paste(x[15,1], x[15,3], sep = " + "),
+        "With_mate_mapped_to_a_different_chr_(mapQ>=5)" = paste(x[16,1], x[16,3], sep = " + ")
     )
     return(final)
 }
 
+
 report_sample <- list()
-#opt$mappingFolder <- "02-MappedReadsBWA/"
+#opt$mappingFolder <- "02-MappedReadsBowtie/"
 #print(getwd())
 statFiles <- list.files(opt$mappingFolder, pattern = ".flagstat", full.names = TRUE)
+i <- statFiles[1]
 for (i in statFiles) { # change this to your "samples"
     #print(i)
     suppressMessages(
         suppressWarnings(
-            report_sample[[i]] <- readr::read_log(
-                i, 
-                #show_col_types = FALSE, 
-                col_names = c(
-                    "Samples",
-                    "in total (QC-passed reads + QC-failed reads)",
-                    'primary',
-                    'supplementary',
-                    'duplicates',
-                    'primary duplicates',
-                    'mapped',
-                    'primary mapped',
-                    'paired in sequencing',
-                    'read1',
-                    'read2',
-                    'properly paired',
-                    'with itself and mate mapped',
-                    'singletons'
-                )
-            )
+            report_sample[[i]] <- readr::read_log(i)
         )
         
     )
 }
 
-#list.files("/Users/haniel/OneDrive/posDoc/miRbaqcom/02-MappedReadsBWA/", pattern = ".flagstat")
-final_df <- lapply(report_sample, FUN = function(x) TidyTable(x)) %>%  bind_rows()
 
+final_dfList <- lapply(report_sample, FUN = function(x) TidyTable(x))
+final_df <- final_dfList  %>%  bind_rows() %>% 
+    as.data.frame()
+#final_df
 report <- "report"
+cat("\nFinished1 \n")
 if (!file.exists(report)) {
     dir.create(report, recursive = TRUE)
 }
-write.table(final_df, paste0(report,"/report_mapping", opt$mappingProgram, ".log"))
 
-print(final_df)
+cat("\n\nfinish2 \n\n")
+write.table(final_df, paste0(report,"/report_mapping_", opt$mappingProgram, ".log"), quote = FALSE, row.names = FALSE)
+cat("\nFinished \n")
+#print(final_df)
 
 
 
