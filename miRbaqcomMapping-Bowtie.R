@@ -995,14 +995,13 @@ final_df <- final_dfList  %>%  bind_rows() %>%
     as.data.frame()
 #final_df
 report <- "report"
-cat("\nFinished1 \n")
 if (!file.exists(report)) {
     dir.create(report, recursive = TRUE)
 }
 
-cat("\n\nfinish2 \n\n")
+
 write.table(final_df, paste0(report,"/report_mapping_", opt$mappingProgram, ".log"), quote = FALSE, row.names = FALSE)
-cat("\nFinished \n")
+
 #print(final_df)
 
 
