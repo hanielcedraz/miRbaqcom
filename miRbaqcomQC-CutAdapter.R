@@ -43,7 +43,7 @@ option_list <- list(
     make_option(
         opt_str = c("-a", "--adapters"), 
         type  = 'character', 
-        default = 'TruSeq3-PE-2.fa',
+        default = 'AACCGGTT',
         help = glue(
             "Sequences of adapters ligated to the 3' and 5' end (paired data: of the first read).", "For the 3' end, the adapter and subsequent bases are trimmed. If a '$' character is appended ('anchoring'), the adapter is only found if it is a suffix of the read. [default %default],",  .sep = "\n"
         ),

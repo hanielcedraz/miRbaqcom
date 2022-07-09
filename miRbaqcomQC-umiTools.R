@@ -205,7 +205,8 @@ if (!any(opt$libraryType %in% c('pairEnd', 'singleEnd'))) {
 
 #opt$singleEnd <- TRUE
 
-
+# opt$samplesFile <- "samplesPair.txt"
+# opt$rawFolder <- "00-FastqPair"
 samples <- baqcomPackage::loadSamplesFile(
     file = opt$samplesFile, 
     reads_folder = opt$rawFolder, 
@@ -221,6 +222,7 @@ cat("\n")
 # create report folders
 logFolder <- 'logFolder'
 if (!file.exists(file.path(logFolder))) dir.create(file.path(logFolder), recursive = TRUE, showWarnings = FALSE)
+
 
 # report_folder <- 'reportmiRbaqcomQC-umiTools'
 # if (!file.exists(file.path(paste0(reports,'/',report_folder)))) dir.create(file.path(paste0(reports,'/',report_folder)), recursive = TRUE, showWarnings = FALSE)
@@ -271,29 +273,28 @@ if (opt$umiCommand == "extract") {
         dir.create(file.path(dedupFolder), recursive = TRUE, showWarnings = FALSE)
     }
     write(glue("Creating directory: {dedupFolder}"), stdout())
-} else if (opt$umiCommand == "both") {
-    extractedFolder <- paste0(output_Folder, "/00-extracted")
-    if (!file.exists(file.path(extractedFolder))) {
-        dir.create(file.path(extractedFolder), recursive = TRUE, showWarnings = FALSE)
-    }
-    bowtieFolder <- paste0(output_Folder, "/01-bowtieMapped")
-    if (!file.exists(file.path(bowtieFolder))) {
-        dir.create(file.path(bowtieFolder), recursive = TRUE, showWarnings = FALSE)
-    }
-    dedupFolder <- paste0(output_Folder, "/02-deduplicated")
-    if (!file.exists(file.path(dedupFolder))) {
-        dir.create(file.path(dedupFolder), recursive = TRUE, showWarnings = FALSE)
-    }
-    write(glue("Creating directory: {extractedFolder}."), stdout())
-    write(glue("Creating directory: {bowtieFolder}."), stdout())
-    write(glue("Creating directory: {dedupFolder}."), stdout())
-}
+} 
+# 
+# else if (opt$umiCommand == "both") {
+#     extractedFolder <- paste0(output_Folder, "/00-extracted")
+#     if (!file.exists(file.path(extractedFolder))) {
+#         dir.create(file.path(extractedFolder), recursive = TRUE, showWarnings = FALSE)
+#     }
+#     bowtieFolder <- paste0(output_Folder, "/01-bowtieMapped")
+#     if (!file.exists(file.path(bowtieFolder))) {
+#         dir.create(file.path(bowtieFolder), recursive = TRUE, showWarnings = FALSE)
+#     }
+#     dedupFolder <- paste0(output_Folder, "/02-deduplicated")
+#     if (!file.exists(file.path(dedupFolder))) {
+#         dir.create(file.path(dedupFolder), recursive = TRUE, showWarnings = FALSE)
+#     }
+#     write(glue("Creating directory: {extractedFolder}."), stdout())
+#     write(glue("Creating directory: {bowtieFolder}."), stdout())
+#     write(glue("Creating directory: {dedupFolder}."), stdout())
+# }
 
 
 
-
-# UMI-Tools analysis function
-#pigz <- system('which pigz 2> /dev/null', ignore.stdout = TRUE, ignore.stderr = TRUE)
 
 if (opt$umiCommand == "extract") {
     umiQuery <- baqcomPackage::createSampleList(
@@ -330,7 +331,7 @@ if (opt$umiCommand == "extract") {
                 paste0("--bc-pattern=", opt$bcPattern),
                 paste0("--read2-in=", index$R2),
                 paste0("--stdout=", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE1.fastq.gz")),
-                paste("--read2-out=", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE2.fastq.gz"))
+                paste0("--read2-out=", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE2.fastq.gz"))
             ), stdout())
             
             try({
@@ -343,7 +344,7 @@ if (opt$umiCommand == "extract") {
                         paste0("--bc-pattern=", opt$bcPattern),
                         paste0("--read2-in=", index$R2),
                         paste0("--stdout=", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE1.fastq.gz")),
-                        paste("--read2-out=", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE2.fastq.gz"))
+                        paste0("--read2-out=", paste0(extractedFolder, "/", index$sampleName, "_extracted_PE2.fastq.gz"))
                     )
                 )
             })
@@ -370,7 +371,7 @@ if (opt$umiCommand == "extract") {
                 paste0("--extract-method=", opt$extractMethod),
                 paste0("--bc-pattern=", opt$bcPattern),
                 paste0("--log=", paste0(logFolder, "/", index$sampleName, "_extracted.log")),
-                paste("--stdout=", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"))
+                paste0("--stdout=", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"))
             ), stdout())
             cat("\n")
             
@@ -383,7 +384,7 @@ if (opt$umiCommand == "extract") {
                         paste0("--extract-method=", opt$extractMethod),
                         paste0("--bc-pattern=", opt$bcPattern),
                         paste0("--log=", paste0(logFolder, "/", index$sampleName, "_extracted.log")),
-                        paste("--stdout=", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"))
+                        paste0("--stdout=", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"))
                     )
                 )
             })
@@ -407,7 +408,6 @@ if (opt$umiCommand == "extract") {
         libraryType = opt$libraryType, 
         program = "htseq"
     )
-
     cat("####===============================================================\n List of samples to process\n")
     print(umiQuery)
     cat("\n")
@@ -417,10 +417,10 @@ if (opt$umiCommand == "extract") {
                 paste(
                     "umi_tools",
                     "dedup",
-                    paste("--stdin", index$SE, sep = "="),
-                    paste("--bc-pattern", opt$bcPattern, sep = "="),
-                    paste("--log", paste0(logFolder, "/", index$sampleName, "_extracted.log"), sep = "="),
-                    paste("--stdout", paste0(extractedFolder, "/", index$sampleName, "_extracted_SE.fastq.gz"), sep = "=")
+                    paste("-I", "index$SE"),
+                    if (opt$libraryType == "pairEnd") {paste("--paired")},
+                    paste("--output-stats", paste0(logFolder, "/", index$sampleName, "_dedup.log"), sep = "="),
+                    paste("-S", paste0(extractedFolder, "/", index$sampleName, "_dedup_SE.bam"))
                 )
             )
         })

@@ -89,7 +89,7 @@ then
     then
             cd $dir
             echo -e 'SAMPLE_ID\tRead_1' > ../samples.txt
-            paste <(ls *_SE_001.fastq.gz | cut -d "_" -f1) <(ls *_SE_001.fastq.gz) >> ../samples.txt
+            paste <(ls *_[R,S][1,E]_001.fastq.gz | cut -d "_" -f1) <(ls *_[R,S][1,E]_001.fastq.gz) >> ../samples.txt
             cd ..
             echo -e "\033[1;31m Samples_File ($file) successfully created"
             echo -e "\033[0m"
