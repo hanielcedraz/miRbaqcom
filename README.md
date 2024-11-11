@@ -14,6 +14,12 @@ make pipelines executable
 chmod +x miRbaqcom*.R
 ```
 
+Download the yaml file that contains the conda env: curso_RNA-Seq.yaml
+Create curso_RNA-Seq env from yaml
+``` bash
+conda env create -f curso_RNA-Seq.yaml
+```
+
 ## GitHub Documents
 
 This pipeline for miRNA-Seq analysis was based on the paper [A
