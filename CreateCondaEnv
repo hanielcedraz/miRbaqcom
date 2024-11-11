@@ -52,6 +52,7 @@ conda install -c bioconda cutadapt
 conda install -c bioconda htseq
 conda install -c bioconda star
 conda install -c bioconda trimmomatic
+conda install bioconda::umi_tools
 
 conda install -c bioconda subread
 conda install -c bioconda hisat2
