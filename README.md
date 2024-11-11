@@ -15,6 +15,7 @@ chmod +x miRbaqcom*.R
 ```
 
 Download the yaml file that contains the conda env: [baqcom.yaml](https://raw.githubusercontent.com/hanielcedraz/RNA-Seq_Course/main/curso_RNA-Seq.yaml](https://github.com/hanielcedraz/newBAQCOM/blob/main/baqcom_env.yaml))
+
 Create baqcom env from yaml
 ``` bash
 conda env create -f baqcom_env.yaml
